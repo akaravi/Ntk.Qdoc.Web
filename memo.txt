@@ -1,0 +1,7 @@
+https://docs.microsoft.com/en-us/azure/azure-signalr/signalr-tutorial-build-blazor-server-chat-app
+
+
+https://docs.microsoft.com/en-us/aspnet/core/tutorials/signalr-blazor?view=aspnetcore-6.0&tabs=visual-studio&pivots=server
+
+
+https://codewithmukesh.com/blog/realtime-chat-application-with-blazor/
