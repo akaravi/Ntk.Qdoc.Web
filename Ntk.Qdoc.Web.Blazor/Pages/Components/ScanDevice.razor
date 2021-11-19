@@ -2,7 +2,6 @@
 @inject IChatService ChatService
 @inject IConnectedClientService ConnectedClientService
 
-
 @if (null == ConnectedClientService?.Client)
 {
     <p>waiting for connection...</p>
@@ -10,6 +9,15 @@
 else
 {
     <EditForm Model=@scan OnValidSubmit="HandleValidSubmit" class="form-signin">
+        <BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="Scan Barcode from Camera"
+                                                     StartCameraAutomatically="true"
+                                                     ShowStart="false"
+                                                     ShowReset="false"
+                                                     ShowToggleTorch="true"
+                                                     ShowVideoDeviceList="false"
+                                                     OnBarcodeReceived="LocalReceivedBarcodeText"
+                                                     VideoWidth="300"
+                                                     VideoHeight="200" />
         <h1 class="h3 mb-3 font-weight-normal">Please Entry Device Code in</h1>
         <label for="inputEmail" class="sr-only">Device Code</label>
         <InputText id="inputEmail" class="form-control mb-4" @bind-Value=scan.Code placeholder="Device Code" required autofocus />
@@ -25,7 +33,7 @@ else
 @code{
     [Parameter]
     public UserModel LoggedUser { get; set; }
-    
+
     private UserModel ScanedUser { get; set; }
     [Parameter]
     public EventCallback<UserModel> onActionUserFind { get; set; }
@@ -47,6 +55,13 @@ else
             onActionUserFind.InvokeAsync(ScanedUser);
         }
         _sending = false;
+    }
+
+    private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+    {
+        this.scan.Code = args.BarcodeText;
+        this.HandleValidSubmit();
+        StateHasChanged();
     }
 
 }

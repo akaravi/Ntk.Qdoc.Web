@@ -28,7 +28,7 @@ else
     @if (ViewScanComponent)
     {
         var view = "main";
-        var view2 = "sendurl";
+        var view2 = "send";
         <ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
         <div class="row">
             <div class="col-4"></div>
@@ -38,11 +38,41 @@ else
             <div class="col-4"></div>
         </div>
     }
-    @if (ViewSendUrlComponent)
+    @if (ViewSendMessageComponent)
     {
         <div class="row h-100">
             <div class="col m-1">
-                <MessageForm LoggedUser="@User" ScanedUser="@ScanedUser" />
+                <MessageForm LoggedUser="@User" ReceiverUsername="@ScanedUser.Username" />
+            </div>
+        </div>
+    }
+    @if (ViewGetMessageComponent)
+    {
+        <div class="w-100 mb-2 chat-messages" style="min-height:200px;">
+            @if (null != _messages)
+            {
+                foreach (var message in _messages)
+                {
+                    <p class='msg'>
+                        <div class='msg-meta'>
+                            @if (!string.IsNullOrEmpty(message.ReceiverUsername))
+                            {
+                                <span class='who'>@message.Username > @message.ReceiverUsername</span>
+                            }
+                            else
+                            {
+                                <span class='who'>@message.Username</span>
+                            }
+                            <span class='when'>@message.When</span>
+                        </div>
+                        <span class='what'>@message.Text</span>
+                    </p>
+                }
+            }
+        </div>
+        <div class="row h-100">
+            <div class="col m-1">
+                <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
             </div>
         </div>
     }
@@ -52,7 +82,8 @@ else
             <Users />
             <div class="col m-1">
                 <Chat />
-                <MessageForm LoggedUser="@User" />
+
+                <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername"  AllowGetReceiverUsername="@true"/>
             </div>
         </div>
     }
@@ -65,23 +96,42 @@ else
     public UserModel User { get; private set; }
     public UserModel ScanedUser { get; set; }
 
-    //private Login _loginBox;
+    private List<MessageModel> _messages;
     private string _qRCodeBase64 = "";
 
     private bool ViewMainComponent = true;
-    private bool ViewSendUrlComponent = false;
+    private bool ViewSendMessageComponent = false;
+    private bool ViewGetMessageComponent = false;
     private bool ViewScanComponent = false;
     private bool ViewChatRoomComponnet = false;
     private PostMessageViewModel _message = new PostMessageViewModel();
-
+    private string ReceiverUsername = "";
     protected override void OnInitialized()
     {
         if (null != this.ChatService)
+        {
             this.ChatService.UserLoggedIn += OnUserLoggedIn;
+            ChatService.MessageReceived += OnMessage;
+            _messages = new List<MessageModel>();
+        }
         this.User = new UserModel(ChatHelper.RandomString(5));
         _qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode("https://localhost:5001/" + this.User, QRCode.ECCLevel.H);
+
     }
 
+    private async void OnMessage(object sender, MessageModel message)
+    {
+        if ( message.ReceiverUsername == User.Username)
+        {
+            if(message.Text.ToLower().IndexOf("https://")==0|| message.Text.ToLower().IndexOf("http://") == 0)
+                UriHelper.NavigateTo(message.Text);
+
+            this.ReceiverUsername = message.Username;
+            _messages.Add(message);
+            this.ActionChangePage("get");
+
+        }
+    }
     protected override void OnAfterRender(bool firstRender)
     {
         base.OnAfterRender(firstRender);
@@ -99,7 +149,7 @@ else
                     ScanedUser = ChatService.CheckUserExist(this.User, id);
                     if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
                     {
-                        ActionChangePage("sendurl");
+                        ActionChangePage("send");
                     }
                 }
             }
@@ -114,13 +164,19 @@ else
     private void Dispose()
     {
         if (null != this.ChatService)
+        {
             this.ChatService.UserLoggedIn -= OnUserLoggedIn;
+
+            this.ChatService.MessageReceived -= OnMessage;
+        }
+
     }
-    private void ActionChangePage(string view)
+    private async Task ActionChangePage(string view)
     {
         ViewScanComponent = false;
         ViewMainComponent = false;
-        ViewSendUrlComponent = false;
+        ViewSendMessageComponent = false;
+        ViewGetMessageComponent = false;
         ViewChatRoomComponnet = false;
         switch (view)
         {
@@ -130,20 +186,24 @@ else
             case "scan":
                 ViewScanComponent = true;
                 break;
-            case "sendurl":
-                ViewSendUrlComponent = true;
+            case "send":
+                ViewSendMessageComponent = true;
+                break;
+            case "get":
+                ViewGetMessageComponent = true;
                 break;
             case "room":
                 ViewChatRoomComponnet = true;
                 break;
         }
-        this.StateHasChanged();
+        // this.StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void ActionScanedDevice(UserModel model)
     {
         this.ScanedUser = model;
-        this.ActionChangePage("sendurl");
+        this.ActionChangePage("send");
     }
 
 }

@@ -17,7 +17,7 @@ namespace Ntk.Qdoc.Web.Blazor.Interfaces
         IEnumerable<UserModel> GetAllUsers();
         void Logout(string username);
         Task PostMessageAsync(UserModel user, string message);
-        Task PostMessageAsync(UserModel user, string userCode, string message);
+        Task PostMessageAsync(UserModel user, string receiverUsername, string message);
         
     }
 }
