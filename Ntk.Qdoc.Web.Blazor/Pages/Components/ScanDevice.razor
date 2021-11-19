@@ -1,0 +1,52 @@
+﻿@page "/scan"
+@inject IChatService ChatService
+@inject IConnectedClientService ConnectedClientService
+
+
+@if (null == ConnectedClientService?.Client)
+{
+    <p>waiting for connection...</p>
+}
+else
+{
+    <EditForm Model=@scan OnValidSubmit="HandleValidSubmit" class="form-signin">
+        <h1 class="h3 mb-3 font-weight-normal">Please Entry Device Code in</h1>
+        <label for="inputEmail" class="sr-only">Device Code</label>
+        <InputText id="inputEmail" class="form-control mb-4" @bind-Value=scan.Code placeholder="Device Code" required autofocus />
+
+        @if (!_sending)
+        {
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Check</button>
+        }
+    </EditForm>
+}
+
+
+@code{
+    [Parameter]
+    public UserModel LoggedUser { get; set; }
+    
+    private UserModel ScanedUser { get; set; }
+    [Parameter]
+    public EventCallback<UserModel> onActionUserFind { get; set; }
+
+    private ScanModel scan { get; set; }
+    private bool _sending = false;
+    protected override void OnInitialized()
+    {
+        _sending = false;
+        scan = new ScanModel();
+    }
+
+    private void HandleValidSubmit()
+    {
+        _sending = true;
+        ScanedUser = ChatService.CheckUserExist(this.LoggedUser, scan.Code);
+        if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
+        {
+            onActionUserFind.InvokeAsync(ScanedUser);
+        }
+        _sending = false;
+    }
+
+}

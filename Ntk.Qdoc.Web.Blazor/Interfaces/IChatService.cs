@@ -13,8 +13,11 @@ namespace Ntk.Qdoc.Web.Blazor.Interfaces
         event EventHandler<MessageModel> MessageReceived;
 
         UserModel Login(string username, ConnectedClientModel client);
+        UserModel CheckUserExist(UserModel user, string userCode);
         IEnumerable<UserModel> GetAllUsers();
         void Logout(string username);
         Task PostMessageAsync(UserModel user, string message);
+        Task PostMessageAsync(UserModel user, string userCode, string message);
+        
     }
 }

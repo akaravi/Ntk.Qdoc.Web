@@ -38,6 +38,11 @@ namespace Ntk.Qdoc.Web.Blazor.Services
             return user;
         }
 
+        public UserModel CheckUserExist(UserModel user, string userCode)
+        {
+            return _usersProvider. GetByUsername(userCode);
+        }
+
         public IEnumerable<UserModel> GetAllUsers() => _usersProvider.GetAll();
 
         public event EventHandler<UserLoginEventArgs> UserLoggedIn;
@@ -59,6 +64,11 @@ namespace Ntk.Qdoc.Web.Blazor.Services
         public async Task PostMessageAsync(UserModel user, string message)
         {
             await _publisher.PublishAsync(new MessageModel(user.Username, message, DateTime.UtcNow));
+        }
+
+        public async Task PostMessageAsync(UserModel user, string userCode, string message)
+        {
+            await _publisher.PublishAsync(new MessageModel(user.Username, userCode, message, DateTime.UtcNow));
         }
     }
 }

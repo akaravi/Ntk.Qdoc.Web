@@ -19,5 +19,7 @@ namespace Ntk.Qdoc.Web.Blazor.Services
         {
             await _writer.WriteAsync(message);
         }
+
+   
     }
 }

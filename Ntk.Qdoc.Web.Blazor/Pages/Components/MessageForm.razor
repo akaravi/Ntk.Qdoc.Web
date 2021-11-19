@@ -19,7 +19,12 @@
 </div>
 
 @code{
-    private ViewModels.PostMessageViewModel _newMessage = new ViewModels.PostMessageViewModel();
+    [Parameter]
+    public UserModel LoggedUser { get; set; }
+    [Parameter]
+    public UserModel ScanedUser { get; set; }
+
+    private PostMessageViewModel _newMessage = new PostMessageViewModel();
     private bool _sending;
 
     protected override void OnInitialized()
@@ -31,11 +36,17 @@
     private async Task HandleValidSubmit()
     {
         _sending = true;
-        await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
-        _newMessage = new ViewModels.PostMessageViewModel();
+        if (this.ScanedUser != null && this.ScanedUser.Username != null)
+        {
+            await ChatService.PostMessageAsync(this.LoggedUser, this.ScanedUser.Username, _newMessage.Text);
+        }
+        else
+        {
+            await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
+        }
+        _newMessage = new PostMessageViewModel();
         _sending = false;
     }
 
-    [Parameter]
-    public UserModel LoggedUser { get; set; }
+ 
 }

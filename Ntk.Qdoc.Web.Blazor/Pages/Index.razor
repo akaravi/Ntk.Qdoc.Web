@@ -1,26 +1,109 @@
 ﻿@page "/"
+@page "/{id}"
 @inject IChatService ChatService
+@inject IConnectedClientService ConnectedClientService
+@inject NavigationManager UriHelper
 
-@if(null != _loginBox?.User){
-    <div class="row h-100">
-        <Users/>
-        <div class="col m-1">
-            <Chat/>
-            <MessageForm LoggedUser=@_loginBox.User/>
+@if (null == ConnectedClientService?.Client)
+{
+    <p>waiting for connection...</p>
+}
+else
+{
+    @if (ViewMainComponent)
+    {
+        var view = "scan";
+        <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4 ">
+                <img src="@_qRCodeBase64" style="width: inherit;" />
+                <h1 class="h3 mb-3 font-weight-normal">Scan QrCode or Use Code</h1>
+                <h1>Code: @this.User.Username</h1>
+
+                <button @onclick="()=>ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">Check</button>
+            </div>
+            <div class="col-4"></div>
         </div>
-    </div>
-}else{
-    <Login @ref="_loginBox" />
+    }
+    @if (ViewScanComponent)
+    {
+        var view = "main";
+        var view2 = "sendurl";
+        <ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
+        <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4 ">
+                <button @onclick="()=>ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">Back Read QrCode</button>
+            </div>
+            <div class="col-4"></div>
+        </div>
+    }
+    @if (ViewSendUrlComponent)
+    {
+        <div class="row h-100">
+            <div class="col m-1">
+                <MessageForm LoggedUser="@User" ScanedUser="@ScanedUser" />
+            </div>
+        </div>
+    }
+    @if (ViewChatRoomComponnet)
+    {
+        <div class="row h-100">
+            <Users />
+            <div class="col m-1">
+                <Chat />
+                <MessageForm LoggedUser="@User" />
+            </div>
+        </div>
+    }
 }
 
+
 @code{
-    private Login _loginBox;
+    [Parameter]
+    public string id { get; set; }
+    public UserModel User { get; private set; }
+    public UserModel ScanedUser { get; set; }
+
+    //private Login _loginBox;
+    private string _qRCodeBase64 = "";
+
+    private bool ViewMainComponent = true;
+    private bool ViewSendUrlComponent = false;
+    private bool ViewScanComponent = false;
+    private bool ViewChatRoomComponnet = false;
     private PostMessageViewModel _message = new PostMessageViewModel();
 
     protected override void OnInitialized()
     {
         if (null != this.ChatService)
             this.ChatService.UserLoggedIn += OnUserLoggedIn;
+        this.User = new UserModel(ChatHelper.RandomString(5));
+        _qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode("https://localhost:5001/" + this.User, QRCode.ECCLevel.H);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (firstRender)
+        {
+            this.User = this.ChatService.Login(User.Username, this.ConnectedClientService.Client);
+            if (!string.IsNullOrEmpty(id))
+            {
+                if (id == "room")
+                {
+                    ActionChangePage("room");
+                }
+                else
+                {
+                    ScanedUser = ChatService.CheckUserExist(this.User, id);
+                    if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
+                    {
+                        ActionChangePage("sendurl");
+                    }
+                }
+            }
+        }
     }
 
     private async void OnUserLoggedIn(object sender, UserLoginEventArgs args)
@@ -33,4 +116,34 @@
         if (null != this.ChatService)
             this.ChatService.UserLoggedIn -= OnUserLoggedIn;
     }
+    private void ActionChangePage(string view)
+    {
+        ViewScanComponent = false;
+        ViewMainComponent = false;
+        ViewSendUrlComponent = false;
+        ViewChatRoomComponnet = false;
+        switch (view)
+        {
+            case "main":
+                ViewMainComponent = true;
+                break;
+            case "scan":
+                ViewScanComponent = true;
+                break;
+            case "sendurl":
+                ViewSendUrlComponent = true;
+                break;
+            case "room":
+                ViewChatRoomComponnet = true;
+                break;
+        }
+        this.StateHasChanged();
+    }
+
+    private void ActionScanedDevice(UserModel model)
+    {
+        this.ScanedUser = model;
+        this.ActionChangePage("sendurl");
+    }
+
 }
