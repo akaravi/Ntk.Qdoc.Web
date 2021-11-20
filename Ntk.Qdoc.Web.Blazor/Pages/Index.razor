@@ -6,86 +6,90 @@
 
 @if (null == ConnectedClientService?.Client)
 {
-    <p>waiting for connection...</p>
+<p>waiting for connection...</p>
 }
 else
 {
-    @if (ViewMainComponent)
+@if (ViewMainComponent)
     {
         var view = "scan";
-        <div class="row">
-            <div class="col-4"></div>
-            <div class="col-4 ">
-                <img src="@_qRCodeBase64" style="width: inherit;" />
-                <h1 class="h3 mb-3 font-weight-normal">Scan QrCode or Use Code</h1>
-                <h1>Code: @this.User.Username</h1>
+<div class="row">
+    <div class="col-4"></div>
+    <div class="col-4 ">
+        <h1 class="h3 mb-3 font-weight-normal">این بارکد را اسکن کنید</h1>
+        <img src="@_qRCodeBase64" style="width: inherit;" />
+        <h1>کد: @this.User.Username</h1>
 
-                <button @onclick="()=>ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">Check</button>
-            </div>
-            <div class="col-4"></div>
-        </div>
+
+
+        <button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بارکد سایرین را اسکن کنید</button>
+    </div>
+    <div class="col-4"></div>
+</div>
     }
-    @if (ViewScanComponent)
+@if (ViewScanComponent)
     {
         var view = "main";
         var view2 = "send";
+
+<div class="row">
+    <div class="col-4"></div>
+    <div class="col-4 ">
         <ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
-        <div class="row">
-            <div class="col-4"></div>
-            <div class="col-4 ">
-                <button @onclick="()=>ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">Back Read QrCode</button>
-            </div>
-            <div class="col-4"></div>
-        </div>
+        <br />
+        <button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بازگشت</button>
+    </div>
+    <div class="col-4"></div>
+</div>
     }
-    @if (ViewSendMessageComponent)
+@if (ViewSendMessageComponent)
     {
-        <div class="row h-100">
-            <div class="col m-1">
-                <MessageForm LoggedUser="@User" ReceiverUsername="@ScanedUser.Username" />
-            </div>
-        </div>
+<div class="row h-100">
+    <div class="col m-1">
+        <MessageForm LoggedUser="@User" ReceiverUsername="@ScanedUser.Username" />
+    </div>
+</div>
     }
-    @if (ViewGetMessageComponent)
+@if (ViewGetMessageComponent)
     {
-        <div class="w-100 mb-2 chat-messages" style="min-height:200px;">
-            @if (null != _messages)
+<div class="w-100 mb-2 chat-messages" style="min-height:200px;">
+    @if (null != _messages)
             {
                 foreach (var message in _messages)
                 {
-                    <p class='msg'>
-                        <div class='msg-meta'>
-                            @if (!string.IsNullOrEmpty(message.ReceiverUsername))
+    <p class='msg'>
+        <div class='msg-meta'>
+            @if (!string.IsNullOrEmpty(message.ReceiverUsername))
                             {
-                                <span class='who'>@message.Username > @message.ReceiverUsername</span>
+            <span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
                             }
                             else
                             {
-                                <span class='who'>@message.Username</span>
+            <span class='who'>@title(message.Username)</span>
                             }
-                            <span class='when'>@message.When</span>
-                        </div>
-                        <span class='what'>@message.Text</span>
-                    </p>
+            <span class='when'>@message.When</span>
+        </div>
+        <span class='what'>@message.Text</span>
+    </p>
                 }
             }
-        </div>
-        <div class="row h-100">
-            <div class="col m-1">
-                <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
-            </div>
-        </div>
+</div>
+<div class="row h-100">
+    <div class="col m-1">
+        <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
+    </div>
+</div>
     }
-    @if (ViewChatRoomComponnet)
+@if (ViewChatRoomComponnet)
     {
-        <div class="row h-100">
-            <Users />
-            <div class="col m-1">
-                <Chat />
+<div class="row h-100">
+    <Users />
+    <div class="col m-1">
+        <Chat />
 
-                <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername"  AllowGetReceiverUsername="@true"/>
-            </div>
-        </div>
+        <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" AllowGetReceiverUsername="@true" />
+    </div>
+</div>
     }
 }
 
@@ -115,21 +119,26 @@ else
             _messages = new List<MessageModel>();
         }
         this.User = new UserModel(ChatHelper.RandomString(5));
-        _qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode("https://localhost:5001/" + this.User, QRCode.ECCLevel.H);
-
+        _qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode(UriHelper.BaseUri + this.User.Username, QRCode.ECCLevel.H);
     }
 
     private async void OnMessage(object sender, MessageModel message)
     {
-        if ( message.ReceiverUsername == User.Username)
+        if (message.Username == User.Username || message.ReceiverUsername == User.Username)
         {
-            if(message.Text.ToLower().IndexOf("https://")==0|| message.Text.ToLower().IndexOf("http://") == 0)
-                UriHelper.NavigateTo(message.Text);
+            if (message.Username != User.Username)
+            {
+                if (message.Text.ToLower().IndexOf("https://") == 0 || message.Text.ToLower().IndexOf("http://") == 0)
+                {
+                    UriHelper.NavigateTo(message.Text);
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+                this.ReceiverUsername = message.Username;
+            }
 
-            this.ReceiverUsername = message.Username;
             _messages.Add(message);
             this.ActionChangePage("get");
-
         }
     }
     protected override void OnAfterRender(bool firstRender)
@@ -170,6 +179,13 @@ else
             this.ChatService.MessageReceived -= OnMessage;
         }
 
+    }
+
+    private string title(string str)
+    {
+        if (str == User.Username)
+            return str + "(me)";
+        return str;
     }
     private async Task ActionChangePage(string view)
     {

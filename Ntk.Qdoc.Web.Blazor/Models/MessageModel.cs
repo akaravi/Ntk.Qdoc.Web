@@ -18,7 +18,7 @@ namespace Ntk.Qdoc.Web.Blazor.Models
             When = when;
         }
         public string Username { get; }
-        public string ReceiverUsername { get; }
+        public string ReceiverUsername { get;  }
         public string Text { get; }
         public DateTime When { get; }
     }

@@ -20,6 +20,7 @@
                     @if(!_sending){
                         <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
                     }
+                    
                 </div> 
             </div>                       
         </EditForm>
@@ -49,7 +50,7 @@
         _sending = true;
         if (!string.IsNullOrEmpty( this.ReceiverUsername))
         {
-            await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername, _newMessage.Text);
+            await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername+"", _newMessage.Text);
         }
         else
         {
