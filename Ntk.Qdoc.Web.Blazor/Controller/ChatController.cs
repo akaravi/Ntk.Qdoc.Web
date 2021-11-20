@@ -34,7 +34,7 @@ namespace Ntk.Qdoc.Web.Blazor.Controller
         [HttpPost]
         public IActionResult PostMessageAsync(SendMessageDtoModel model)
         {
-            _publisher.PublishAsync(new MessageModel(model.Username, model.Message, DateTime.UtcNow));
+            _publisher.PublishAsync(new MessageModel("api", model.Username, model.Message, DateTime.UtcNow));
             return new OkResult();
         }
     }

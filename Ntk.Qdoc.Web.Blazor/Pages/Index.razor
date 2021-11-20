@@ -129,6 +129,7 @@ else
 
     private async void OnMessage(object sender, MessageModel message)
     {
+
         if (message.Username == User.Username || message.ReceiverUsername == User.Username)
         {
             if (message.ReceiverUsername == User.Username)
