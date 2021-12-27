@@ -5,72 +5,71 @@
 
 @if (null == ConnectedClientService?.Client)
 {
-<p>waiting for connection...</p>
+	<p>waiting for connection...</p>
 }
 else
 {
-<EditForm Model=@scan OnValidSubmit="HandleValidSubmit" >
-    <BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="بارکد را با دوربین اسکن کنید"
-                                                 StartCameraAutomatically="false"
-                                                 ShowStart="false"
-                                                 ShowReset="false"
-                                                 ShowToggleTorch="false"
-                                                 ShowVideoDeviceList="false"
-                                                 OnBarcodeReceived="LocalReceivedBarcodeText"
-                                                />
-    <h1 class="h3 mb-3 font-weight-normal">یا کد دیگری را وارد کنید</h1>
-    <br/>
-    <label for="inputEmail" class="sr-only">کد دستگاه</label>
-    <InputText id="inputEmail" class="form-control mb-4" @bind-Value=scan.Code placeholder="Device Code" required autofocus />
+	<EditForm Model=@scan OnValidSubmit="HandleValidSubmit">
+		<BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="بارکد را با دوربین اسکن کنید"
+												 StartCameraAutomatically="false"
+												 ShowStart="false"
+												 ShowReset="false"
+												 ShowToggleTorch="false"
+												 ShowVideoDeviceList="false"
+												 OnBarcodeReceived="LocalReceivedBarcodeText" />
+		<h1 class="h3 mb-3 font-weight-normal">یا کد دیگری را وارد کنید</h1>
+		<br />
+		<label for="inputEmail" class="sr-only">کد دستگاه</label>
+		<InputText id="inputEmail" class="form-control mb-4" @bind-Value=scan.Code placeholder="Device Code" required autofocus />
 
-    @if (!_sending)
-        {
-    <button class="btn btn-lg btn-primary btn-block" type="submit">بررسی کد</button>
-        }
-</EditForm>
+		@if (!_sending)
+		{
+			<button class="btn btn-lg btn-primary btn-block" type="submit">بررسی کد</button>
+		}
+	</EditForm>
 }
 
 
-@code{
-    [Parameter]
-    public UserModel LoggedUser { get; set; }
+@code {
+	[Parameter]
+	public UserModel LoggedUser { get; set; }
 
-    private UserModel ScanedUser { get; set; }
-    [Parameter]
-    public EventCallback<UserModel> onActionUserFind { get; set; }
+	private UserModel ScanedUser { get; set; }
+	[Parameter]
+	public EventCallback<UserModel> onActionUserFind { get; set; }
 
-    private ScanModel scan { get; set; }
-    private bool _sending = false;
-    protected override void OnInitialized()
-    {
-        _sending = false;
-        scan = new ScanModel();
-    }
+	private ScanModel scan { get; set; }
+	private bool _sending = false;
+	protected override void OnInitialized()
+	{
+		_sending = false;
+		scan = new ScanModel();
+	}
 
-    private async Task HandleValidSubmit()
-    {
-        _sending = true;
-        ScanedUser = ChatService.CheckUserExist(this.LoggedUser, scan.Code);
-        if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
-        {
-            onActionUserFind.InvokeAsync(ScanedUser);
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "یافت نشد"); // Alert
-        }
-        _sending = false;
-    }
+	private async Task HandleValidSubmit()
+	{
+		_sending = true;
+		ScanedUser = ChatService.CheckUserExist(this.LoggedUser, scan.Code);
+		if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
+		{
+			onActionUserFind.InvokeAsync(ScanedUser);
+		}
+		else
+		{
+			await JsRuntime.InvokeVoidAsync("alert", "یافت نشد"); // Alert
+		}
+		_sending = false;
+	}
 
-    private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
-    {
-        if (args.BarcodeText.LastIndexOf("/") > 0)
-        {
-            this.scan.Code = args.BarcodeText.Substring(args.BarcodeText.LastIndexOf("/") + 1);
-            this.HandleValidSubmit();
-            StateHasChanged();
-        }
+	private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+	{
+		if (args.BarcodeText.LastIndexOf("/") > 0)
+		{
+			this.scan.Code = args.BarcodeText.Substring(args.BarcodeText.LastIndexOf("/") + 1);
+			this.HandleValidSubmit();
+			StateHasChanged();
+		}
 
-    }
+	}
 
 }

@@ -1,64 +1,65 @@
 ﻿@inject IChatService ChatService
 
 <div class="msg-form-container row">
-    <div class="col">
-        <EditForm Model=@_newMessage OnValidSubmit="HandleValidSubmit">
-            <div class="form-group row">    
-                
-                @if (AllowGetReceiverUsername)
-                {
-                    <div class="col mb-2">
-                        <InputText id="device" @bind-Value=@ReceiverUsername
-                                   class="form-control" placeholder="Device Code"/>
-                    </div>
-                }
-                <div class="col mb-2">
-                    <InputText id="message" @bind-Value=_newMessage.Text
-                        class="form-control" placeholder="type your message here..." />
-                </div>                
-                <div class="col-2">
-                    @if(!_sending){
-                        <button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
-                    }
-                    
-                </div> 
-            </div>                       
-        </EditForm>
-    </div>
+	<div class="col">
+		<EditForm Model=@_newMessage OnValidSubmit="HandleValidSubmit">
+			<div class="form-group row">
+
+				@if (AllowGetReceiverUsername)
+				{
+					<div class="col mb-2">
+						<InputText id="device" @bind-Value=@ReceiverUsername
+							   class="form-control" placeholder="Device Code" />
+					</div>
+				}
+				<div class="col mb-2">
+					<InputText id="message" @bind-Value=_newMessage.Text
+							   class="form-control" placeholder="type your message here..." />
+				</div>
+				<div class="col-2">
+					@if (!_sending)
+					{
+						<button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
+					}
+
+				</div>
+			</div>
+		</EditForm>
+	</div>
 </div>
 
-@code{
-    [Parameter]
-    public UserModel LoggedUser { get; set; }
-    [Parameter]
-    public string ReceiverUsername { get; set; }
+@code {
+	[Parameter]
+	public UserModel LoggedUser { get; set; }
+	[Parameter]
+	public string ReceiverUsername { get; set; }
 
-    [Parameter]
-    public bool AllowGetReceiverUsername { get; set; } = false;
+	[Parameter]
+	public bool AllowGetReceiverUsername { get; set; } = false;
 
-    private PostMessageViewModel _newMessage = new PostMessageViewModel();
-    private bool _sending;
+	private PostMessageViewModel _newMessage = new PostMessageViewModel();
+	private bool _sending;
 
-    protected override void OnInitialized()
-    {
-        _sending = false;
-    }
+	protected override void OnInitialized()
+	{
+		_sending = false;
+	}
 
 
-    private async Task HandleValidSubmit()
-    {
-        _sending = true;
-        if (!string.IsNullOrEmpty( this.ReceiverUsername))
-        {
-            await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername+"", _newMessage.Text);
-        }
-        else
-        {
-            await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
-        }
-        _newMessage = new PostMessageViewModel();
-        _sending = false;
-    }
+	private async Task HandleValidSubmit()
+	{
+		_sending = true;
+		if (!string.IsNullOrEmpty(this.ReceiverUsername))
+		{
+			await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername + "", _newMessage.Text);
+		}
+		else
+		{
+			await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
+		}
+		_newMessage = new PostMessageViewModel();
+		_sending = false;
+	}
 
 
 }

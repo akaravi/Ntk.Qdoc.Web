@@ -7,260 +7,260 @@
 
 @if (null == ConnectedClientService?.Client)
 {
-    <p>waiting for connection...</p>
+	<p>waiting for connection...</p>
 }
 else
 {
-    @if (ViewMainComponent)
-    {
+	@if (ViewMainComponent)
+	{
 
-        var view = "scan";
+		var view = "scan";
 
-        <div class="col-12 img_background">
-            <div class="row">
-                <div class="col-md-2 col-lg-4 col-sm-1"></div>
-                <div class="col-md-8 col-lg-4 col-sm-10">
-                    
-                    <h1 class="h3 mb-3 font-weight-bold">این بارکد را اسکن کنید</h1>
-                    
-                    <img src="@_qRCodeBase64" style="width: inherit;" />
-                    
-                    <h1>کد: @this.User.Username</h1>
-                    
-                    <button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بارکد سایرین را اسکن کنید</button>
-                </div>
-                <div class="col-md-2 col-lg-4 col-sm-1"></div>
-            </div>
-        </div>
+		<div class="col-12 img_background">
+			<div class="row">
+				<div class="col-md-2 col-lg-4 col-sm-1"></div>
+				<div class="col-md-8 col-lg-4 col-sm-10">
 
-    }
-    @if (ViewScanComponent)
-    {
-        var view = "main";
-        var view2 = "send";
+					<h1 class="h3 mb-3 font-weight-bold">این بارکد را اسکن کنید</h1>
 
-<div class="col-12 img_background">
-    <div class="row">
-        <div class="col-md-2 col-lg-3 "></div>
-        <div class="col-md-8 col-lg-6 col-sm-12">
-            <ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
-            <br />
-            <button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بازگشت</button>
-        </div>
-        <div class="col-md-2 col-lg-3 "></div>
+					<img src="@_qRCodeBase64" style="width: inherit;" />
 
-    </div>
-</div>
-            }
-            @if (ViewSendMessageComponent)
-            {
-                <div class="row h-100">
-                    <div class="col m-1">
-                        <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
-                    </div>
-                </div>
-               
-            }
-            @if (ViewGetMessageComponent)
-            {
-                <div class="w-100 mb-2 chat-messages" style="min-height:200px;">
-                    @if (null != _messages)
-                    {
-                        foreach (var message in _messages)
-                        {
-                            <p class='msg'>
-                                <div class='msg-meta'>
-                                    @if (!string.IsNullOrEmpty(message.ReceiverUsername))
-                                    {
-                                        <span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class='who'>@title(message.Username)</span>
-                                    }
-                                    <span class='when'>@message.When</span>
-                                </div>
-                                <span class='what'>@message.Text</span>
-                            </p>
-                        }
-                    }
-                </div>
-                <div class="row h-100">
-                    <div class="col m-1">
-                        <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
-                    </div>
-                </div>
-            }
-            @if (ViewChatRoomComponnet)
-            {
-                <div class="row h-100">
-                    <Users />
-                    <div class="col m-1">
-                        <Chat />
+					<h1>کد: @this.User.Username</h1>
 
-                        <MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" AllowGetReceiverUsername="@true" />
-                    </div>
-                </div>
-            }
-            }
+					<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بارکد سایرین را اسکن کنید</button>
+				</div>
+				<div class="col-md-2 col-lg-4 col-sm-1"></div>
+			</div>
+		</div>
+
+	}
+	@if (ViewScanComponent)
+	{
+		var view = "main";
+		var view2 = "send";
+
+		<div class="col-12 img_background">
+			<div class="row">
+				<div class="col-md-2 col-lg-3 "></div>
+				<div class="col-md-8 col-lg-6 col-sm-12">
+					<ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
+					<br />
+					<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بازگشت</button>
+				</div>
+				<div class="col-md-2 col-lg-3 "></div>
+
+			</div>
+		</div>
+	}
+	@if (ViewSendMessageComponent)
+	{
+		<div class="row h-100">
+			<div class="col m-1">
+				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
+			</div>
+		</div>
+
+	}
+	@if (ViewGetMessageComponent)
+	{
+		<div class="w-100 mb-2 chat-messages" style="min-height:200px;">
+			@if (null != _messages)
+			{
+				foreach (var message in _messages)
+				{
+					<p class='msg'>
+						<div class='msg-meta'>
+							@if (!string.IsNullOrEmpty(message.ReceiverUsername))
+							{
+								<span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
+							}
+							else
+							{
+								<span class='who'>@title(message.Username)</span>
+							}
+							<span class='when'>@message.When</span>
+						</div>
+						<span class='what'>@message.Text</span>
+					</p>
+				}
+			}
+		</div>
+		<div class="row h-100">
+			<div class="col m-1">
+				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
+			</div>
+		</div>
+	}
+	@if (ViewChatRoomComponnet)
+	{
+		<div class="row h-100">
+			<Users />
+			<div class="col m-1 img_background">
+				<Chat />
+
+				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" AllowGetReceiverUsername="@true" />
+			</div>
+		</div>
+	}
+}
 
 
-            @code{
-                [Parameter]
-                public string id { get; set; }
-    public UserModel User { get; private set; }
-        public UserModel ScanedUser { get; set; }
+@code {
+	[Parameter]
+	public string id { get; set; }
+	public UserModel User { get; private set; }
+	public UserModel ScanedUser { get; set; }
 
-        private List<MessageModel>
-        _messages;
+	private List<MessageModel>
+	_messages;
 
-        private string _qRCodeBase64 = "";
+	private string _qRCodeBase64 = "";
 
-        private bool ViewMainComponent = true;
-        private bool ViewSendMessageComponent = false;
-        private bool ViewGetMessageComponent = false;
-        private bool ViewScanComponent = false;
-        private bool ViewChatRoomComponnet = false;
-        private PostMessageViewModel _message = new PostMessageViewModel();
-        private string ReceiverUsername = "";
-        protected override void OnInitialized()
-        {
-            if (null != this.ChatService)
-            {
-                this.ChatService.UserLoggedIn += OnUserLoggedIn;
-                ChatService.MessageReceived += OnMessage;
-                ChatService.UserLoggedOut += OnUserLoggedOut;
-                _messages = new List<MessageModel>
-                ();
-            }
-            this.User = new UserModel(ChatHelper.RandomString(5));
-            _qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode(UriHelper.BaseUri + this.User.Username, QRCode.ECCLevel.H);
-        }
+	private bool ViewMainComponent = true;
+	private bool ViewSendMessageComponent = false;
+	private bool ViewGetMessageComponent = false;
+	private bool ViewScanComponent = false;
+	private bool ViewChatRoomComponnet = false;
+	private PostMessageViewModel _message = new PostMessageViewModel();
+	private string ReceiverUsername = "";
+	protected override void OnInitialized()
+	{
+		if (null != this.ChatService)
+		{
+			this.ChatService.UserLoggedIn += OnUserLoggedIn;
+			ChatService.MessageReceived += OnMessage;
+			ChatService.UserLoggedOut += OnUserLoggedOut;
+			_messages = new List<MessageModel>
+			();
+		}
+		this.User = new UserModel(ChatHelper.RandomString(5));
+		_qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode(UriHelper.BaseUri + this.User.Username, QRCode.ECCLevel.H);
+	}
 
-        private async void OnMessage(object sender, MessageModel message)
-        {
+	private async void OnMessage(object sender, MessageModel message)
+	{
 
-            if (message.Username == User.Username || message.ReceiverUsername == User.Username)
-            {
-                if (message.ReceiverUsername == User.Username)
-                {
-                    if (message.Text.ToLower().IndexOf("https://") == 0 || message.Text.ToLower().IndexOf("http://") == 0)
-                    {
-                        UriHelper.NavigateTo(message.Text);
-                        await InvokeAsync(StateHasChanged);
-                        return;
-                    }
-                }
-                if (message.ReceiverUsername == User.Username)
-                {
-                    this.ReceiverUsername = message.Username;
-                }
+		if (message.Username == User.Username || message.ReceiverUsername == User.Username)
+		{
+			if (message.ReceiverUsername == User.Username)
+			{
+				if (message.Text.ToLower().IndexOf("https://") == 0 || message.Text.ToLower().IndexOf("http://") == 0)
+				{
+					UriHelper.NavigateTo(message.Text);
+					await InvokeAsync(StateHasChanged);
+					return;
+				}
+			}
+			if (message.ReceiverUsername == User.Username)
+			{
+				this.ReceiverUsername = message.Username;
+			}
 
-                _messages.Add(message);
-                this.ActionChangePage("get");
-            }
-        }
-        protected override void OnAfterRender(bool firstRender)
-        {
-            base.OnAfterRender(firstRender);
-            if (firstRender)
-            {
-                this.User = this.ChatService.Login(User.Username, this.ConnectedClientService.Client);
-                if (!string.IsNullOrEmpty(id))
-                {
-                    if (id == "room")
-                    {
-                        ActionChangePage("room");
-                    }
-                    else
-                    {
-                        ScanedUser = ChatService.CheckUserExist(this.User, id);
-                        if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
-                        {
-                            this.ReceiverUsername = ScanedUser.Username;
-                            ActionChangePage("send");
-                        }
-                    }
-                }
-            }
-        }
+			_messages.Add(message);
+			this.ActionChangePage("get");
+		}
+	}
+	protected override void OnAfterRender(bool firstRender)
+	{
+		base.OnAfterRender(firstRender);
+		if (firstRender)
+		{
+			this.User = this.ChatService.Login(User.Username, this.ConnectedClientService.Client);
+			if (!string.IsNullOrEmpty(id))
+			{
+				if (id == "room")
+				{
+					ActionChangePage("room");
+				}
+				else
+				{
+					ScanedUser = ChatService.CheckUserExist(this.User, id);
+					if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
+					{
+						this.ReceiverUsername = ScanedUser.Username;
+						ActionChangePage("send");
+					}
+				}
+			}
+		}
+	}
 
-        private async void OnUserLoggedIn(object sender, UserLoginEventArgs args)
-        {
-            await InvokeAsync(this.StateHasChanged);
-        }
-        private async void OnUserLoggedOut(object sender, UserLogoutEventArgs args)
-        {
-            if (string.IsNullOrEmpty(this.ReceiverUsername))
-                return;
+	private async void OnUserLoggedIn(object sender, UserLoginEventArgs args)
+	{
+		await InvokeAsync(this.StateHasChanged);
+	}
+	private async void OnUserLoggedOut(object sender, UserLogoutEventArgs args)
+	{
+		if (string.IsNullOrEmpty(this.ReceiverUsername))
+			return;
 
-            var _users = this.ChatService.GetAllUsers();
-            if (!_users.Any(x => x.Username == this.ReceiverUsername))
-            {
-                await JsRuntime.InvokeVoidAsync("alert", "شناسه مورد نظر از ارتباط خارج شد"); // Alert
+		var _users = this.ChatService.GetAllUsers();
+		if (!_users.Any(x => x.Username == this.ReceiverUsername))
+		{
+			await JsRuntime.InvokeVoidAsync("alert", "شناسه مورد نظر از ارتباط خارج شد"); // Alert
 
-                ActionChangePage("main");
-            }
+			ActionChangePage("main");
+		}
 
-        }
-        private void Dispose()
-        {
-            if (null != this.ChatService)
-            {
-                this.ChatService.UserLoggedIn -= OnUserLoggedIn;
+	}
+	private void Dispose()
+	{
+		if (null != this.ChatService)
+		{
+			this.ChatService.UserLoggedIn -= OnUserLoggedIn;
 
-                this.ChatService.MessageReceived -= OnMessage;
-            }
+			this.ChatService.MessageReceived -= OnMessage;
+		}
 
-        }
+	}
 
-        private string title(string str)
-        {
-            if (str == User.Username)
-                return str + "(me)";
-            return str;
-        }
-        private string viewLast = "";
-        private async Task ActionChangePage(string view)
-        {
-            if (viewLast == view || viewLast == "room")
-            {
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-            viewLast = view;
-            ViewScanComponent = false;
-            ViewMainComponent = false;
-            ViewSendMessageComponent = false;
-            ViewGetMessageComponent = false;
-            ViewChatRoomComponnet = false;
-            switch (view)
-            {
-                case "main":
-                    ViewMainComponent = true;
-                    break;
-                case "scan":
-                    ViewScanComponent = true;
-                    break;
-                case "send":
-                    ViewSendMessageComponent = true;
-                    break;
-                case "get":
-                    ViewGetMessageComponent = true;
-                    break;
-                case "room":
-                    ViewChatRoomComponnet = true;
-                    break;
-            }
-            // this.StateHasChanged();
-            await InvokeAsync(StateHasChanged);
-        }
+	private string title(string str)
+	{
+		if (str == User.Username)
+			return str + "(me)";
+		return str;
+	}
+	private string viewLast = "";
+	private async Task ActionChangePage(string view)
+	{
+		if (viewLast == view || viewLast == "room")
+		{
+			await InvokeAsync(StateHasChanged);
+			return;
+		}
+		viewLast = view;
+		ViewScanComponent = false;
+		ViewMainComponent = false;
+		ViewSendMessageComponent = false;
+		ViewGetMessageComponent = false;
+		ViewChatRoomComponnet = false;
+		switch (view)
+		{
+			case "main":
+				ViewMainComponent = true;
+				break;
+			case "scan":
+				ViewScanComponent = true;
+				break;
+			case "send":
+				ViewSendMessageComponent = true;
+				break;
+			case "get":
+				ViewGetMessageComponent = true;
+				break;
+			case "room":
+				ViewChatRoomComponnet = true;
+				break;
+		}
+		// this.StateHasChanged();
+		await InvokeAsync(StateHasChanged);
+	}
 
-        private void ActionScanedDevice(UserModel model)
-        {
-            this.ScanedUser = model;
-            this.ReceiverUsername = ScanedUser.Username;
-            this.ActionChangePage("send");
-        }
+	private void ActionScanedDevice(UserModel model)
+	{
+		this.ScanedUser = model;
+		this.ReceiverUsername = ScanedUser.Username;
+		this.ActionChangePage("send");
+	}
 
             }
