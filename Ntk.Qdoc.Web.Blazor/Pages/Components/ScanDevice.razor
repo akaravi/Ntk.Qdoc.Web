@@ -11,7 +11,7 @@ else
 {
 <EditForm Model=@scan OnValidSubmit="HandleValidSubmit" >
     <BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="بارکد را با دوربین اسکن کنید"
-                                                 StartCameraAutomatically="true"
+                                                 StartCameraAutomatically="false"
                                                  ShowStart="false"
                                                  ShowReset="false"
                                                  ShowToggleTorch="false"
@@ -19,6 +19,7 @@ else
                                                  OnBarcodeReceived="LocalReceivedBarcodeText"
                                                 />
     <h1 class="h3 mb-3 font-weight-normal">یا کد دیگری را وارد کنید</h1>
+    <br/>
     <label for="inputEmail" class="sr-only">کد دستگاه</label>
     <InputText id="inputEmail" class="form-control mb-4" @bind-Value=scan.Code placeholder="Device Code" required autofocus />
 
