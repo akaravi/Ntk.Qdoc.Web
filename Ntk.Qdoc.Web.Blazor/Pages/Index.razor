@@ -134,7 +134,7 @@ else
 			();
 		}
 		this.User = new UserModel(ChatHelper.RandomString(5));
-		_qRCodeBase64 = "data:image/jpg;base64," + QRCode.UrlToQRCode(UriHelper.BaseUri + this.User.Username, QRCode.ECCLevel.H);
+		_qRCodeBase64 = "data:image/jpg;base64," + QRCodeHelper.UrlToQRCode(UriHelper.BaseUri + this.User.Username, QRCodeHelper.ECCLevel.H);
 	}
 
 	private async void OnMessage(object sender, MessageModel message)

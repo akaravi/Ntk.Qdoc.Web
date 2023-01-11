@@ -9,7 +9,7 @@ using static QRCoder.PayloadGenerator;
 namespace Ntk.Qdoc.Web.Blazor.Helper
 {
 
-    public static class QRCode
+    public static class QRCodeHelper
     {
         public enum ECCLevel
         {
