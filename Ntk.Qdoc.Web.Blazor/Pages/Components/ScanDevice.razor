@@ -12,8 +12,8 @@ else
 	<EditForm Model=@scan OnValidSubmit="HandleValidSubmit">
 		<BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="بارکد را با دوربین اسکن کنید"
 												 StartCameraAutomatically="false"
-												 ShowStart="false"
-												 ShowReset="false"
+												 ShowStart="true"
+												 ShowReset="true"
 												 ShowToggleTorch="false"
 												 ShowVideoDeviceList="false"
 												 OnBarcodeReceived="LocalReceivedBarcodeText" />
