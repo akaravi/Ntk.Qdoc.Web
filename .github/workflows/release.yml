@@ -125,15 +125,8 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_PATH }}
-
-      - name: Build solution
-        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
-
-      - name: Run tests (if any)
-        continue-on-error: true
-        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" || echo "No tests found or tests failed, continuing..."
+      - name: Restore dependencies for ${{ matrix.runtime }}
+        run: dotnet restore ${{ env.SOLUTION_PATH }} --runtime ${{ matrix.runtime }}
 
       - name: Publish application for ${{ matrix.runtime }}
         run: |
@@ -142,7 +135,11 @@ jobs:
             --runtime ${{ matrix.runtime }} \
             --self-contained false \
             --output ./publish/${{ matrix.runtime }} \
-            --no-build
+            --no-restore
+
+      - name: Run tests (if any)
+        continue-on-error: true
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" || echo "No tests found or tests failed, continuing..."
 
       - name: Create archive for ${{ matrix.runtime }}
         shell: bash
