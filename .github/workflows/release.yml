@@ -126,9 +126,11 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies for ${{ matrix.runtime }}
+        shell: bash
         run: dotnet restore ${{ env.SOLUTION_PATH }} --runtime ${{ matrix.runtime }}
 
       - name: Publish application for ${{ matrix.runtime }}
+        shell: bash
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} \
             --configuration Release \
