@@ -1,7 +1,14 @@
-﻿@inject IChatService ChatService
-<div class="w-100 mb-4 chat-messages" style="min-height:200px;background: #e2f3ff">
-	@if (null != _messages)
+﻿@using System.Linq
+@inject IChatService ChatService
+<div class="w-100 mb-3 chat-messages fade-in">
+	@if (null != _messages && _messages.Count > 0)
 	{
+		<div class="section-header">
+			<h3 class="title mb-0">پیام‌ها</h3>
+			<div class="meta">
+				<span class="badge-soft">@_messages.Count پیام</span>
+			</div>
+		</div>
 		foreach (var message in _messages)
 		{
 			<p class='msg'>
@@ -19,6 +26,10 @@
 				<span class='what'>@message.Text</span>
 			</p>
 		}
+	}
+	else
+	{
+		<div class="empty-state">پیامی برای نمایش وجود ندارد.</div>
 	}
 </div>
 @code {

@@ -1,13 +1,42 @@
 ﻿@inject IChatService ChatService
 
-<div class="col-3 users">
+@using System.Linq
+
+<div class="users-panel fade-in">
+	<div class="section-header">
+		<h3 class="title mb-0">کاربران</h3>
+		<div class="meta">
+			<span class="badge-soft">@( (_users?.Count() ?? 0) ) کاربر</span>
+			<span class="pill">
+				<span class="status-dot"></span>
+				@((_users?.Count(x => x.Client != null) ?? 0)) آنلاین
+			</span>
+		</div>
+	</div>
 	<div class='users-list p-2'>
 		@if (null != _users)
 		{
-			foreach (var user in _users)
+			if (_users.Any())
 			{
-				<p><span class='mr-1 status-@( (null != user.Client) ? "online" : "offline")'><i class="fa fa-user"></i></span>@user.Username</p>
+				foreach (var user in _users)
+				{
+					<p>
+						<span class='mr-2'>
+							<span class="status-dot @( (null != user.Client) ? "" : "status-offline-dot")"></span>
+						</span>
+						<span class='mr-1 status-@( (null != user.Client) ? "online" : "offline")'><i class="fa fa-user"></i></span>
+						@user.Username
+					</p>
+				}
 			}
+			else
+			{
+				<div class="empty-state">هیچ کاربری متصل نیست.</div>
+			}
+		}
+		else
+		{
+			<div class="empty-state">در حال دریافت فهرست کاربران...</div>
 		}
 	</div>
 </div>

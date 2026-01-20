@@ -1,0 +1,7 @@
+2026-01-20  Updated README.md with full project overview, architecture, setup steps, API sample, and troubleshooting notes.
+2026-01-20  Refreshed UI/UX styling (responsive layout, chat/room surfaces, form polish) across Blazor components.
+2026-01-20  Enhanced visuals: message bubbles, user list header/count, empty states, focus styles, and Persian placeholders for form fields.
+2026-01-20  Upgraded target framework to .NET 9, updated README stack/prereqs, and verified run.
+2026-01-20  Fixed async warnings by awaiting navigation callbacks in Index and ScanDevice.
+2026-01-20  Additional UI polish: added soft badges/pills, fade-in animation, chat header with count, and enhanced users panel (online count, status dots).
+2026-01-20  Created professional GitHub Actions workflow (.github/workflows/release.yml) for automatic Release creation when pushing to publish branch. Workflow extracts version from Ntk.Qdoc.Web.Blazor.csproj file. Added Version, AssemblyVersion, and FileVersion properties to csproj file.

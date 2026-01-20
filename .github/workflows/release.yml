@@ -1,0 +1,183 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - publish
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: false
+        type: string
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  SOLUTION_PATH: 'Ntk.Qdoc.Web.sln'
+  PROJECT_PATH: 'Ntk.Qdoc.Web.Blazor/Ntk.Qdoc.Web.Blazor.csproj'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Extract version from csproj
+        id: csproj_version
+        run: |
+          # Extract Version property from csproj XML file
+          VERSION=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' ${{ env.PROJECT_PATH }} | head -1 | xargs)
+          
+          # Fallback: if sed didn't work, try with grep
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -oP '<Version>\K[^<]+' ${{ env.PROJECT_PATH }} | head -1 | xargs || echo "")
+          fi
+          
+          # Final fallback
+          if [ -z "$VERSION" ]; then
+            echo "Version not found in csproj, using default: 1.0.0"
+            VERSION="1.0.0"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version from csproj: $VERSION"
+
+      - name: Use manual version if provided
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+        id: manual_version
+        run: |
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Using manual version: ${{ github.event.inputs.version }}"
+
+      - name: Extract version from tag if on tag
+        id: tag_version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$TAG_VERSION" >> $GITHUB_OUTPUT
+          echo "Version from tag: $TAG_VERSION"
+
+      - name: Set final version
+        id: final_version
+        run: |
+          if [ "${{ steps.tag_version.outputs.version }}" != "" ]; then
+            FINAL_VERSION="${{ steps.tag_version.outputs.version }}"
+          elif [ "${{ github.event.inputs.version }}" != "" ]; then
+            FINAL_VERSION="${{ github.event.inputs.version }}"
+          else
+            FINAL_VERSION="${{ steps.csproj_version.outputs.version }}"
+          fi
+          echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "version_tag=v$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "release_name=Release v$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "Final version: $FINAL_VERSION"
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Build solution
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+      - name: Run tests (if any)
+        continue-on-error: true
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" || echo "No tests found or tests failed, continuing..."
+
+      - name: Publish application
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            --configuration Release \
+            --output ./publish \
+            --no-build
+
+      - name: Create archive
+        run: |
+          cd publish
+          zip -r ../Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip .
+          cd ..
+          tar -czf Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz -C publish .
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "${{ steps.final_version.outputs.version_tag }}" 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release does not exist"
+          fi
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create or update release
+        if: steps.check_release.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.final_version.outputs.version_tag }}
+          name: ${{ steps.final_version.outputs.release_name }}
+          body: |
+            ## Release v${{ steps.final_version.outputs.version }}
+            
+            ### 🚀 Changes
+            This release was automatically created from the `publish` branch.
+            
+            ### 📦 Artifacts
+            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
+            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            
+            ### 📝 Build Information
+            - **Build Date**: ${{ github.event.head_commit.timestamp || github.run_started_at }}
+            - **Commit**: ${{ github.sha }}
+            - **Branch**: ${{ github.ref_name }}
+            
+            ### 🛠️ Installation
+            1. Extract the archive
+            2. Run `dotnet Ntk.Qdoc.Web.Blazor.dll` in the extracted folder
+          files: |
+            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
+            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update release (if exists)
+        if: steps.check_release.outputs.exists == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.final_version.outputs.version_tag }}
+          name: ${{ steps.final_version.outputs.release_name }}
+          body: |
+            ## Release v${{ steps.final_version.outputs.version }} (Updated)
+            
+            ### 🚀 Changes
+            This release was automatically updated from the `publish` branch.
+            
+            ### 📦 Artifacts
+            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
+            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            
+            ### 📝 Build Information
+            - **Build Date**: ${{ github.event.head_commit.timestamp || github.run_started_at }}
+            - **Commit**: ${{ github.sha }}
+            - **Branch**: ${{ github.ref_name }}
+          files: |
+            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
+            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

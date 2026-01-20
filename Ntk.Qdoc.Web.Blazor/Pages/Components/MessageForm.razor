@@ -1,31 +1,23 @@
 ﻿@inject IChatService ChatService
 
-<div class="msg-form-container row">
-	<div class="col">
-		<EditForm Model=@_newMessage OnValidSubmit="HandleValidSubmit">
-			<div class="form-group row">
-
+<div class="msg-form-container">
+	<EditForm Model=@_newMessage OnValidSubmit="HandleValidSubmit">
+		<div class="form-group w-100">
+			<div class="d-flex flex-wrap align-items-center gap-2">
 				@if (AllowGetReceiverUsername)
 				{
-					<div class="col mb-2">
-						<InputText id="device" @bind-Value=@ReceiverUsername
-							   class="form-control" placeholder="Device Code" />
-					</div>
+					<InputText id="device" @bind-Value=@ReceiverUsername
+							   class="form-control flex-fill" placeholder="کد دستگاه گیرنده" />
 				}
-				<div class="col mb-2">
-					<InputText id="message" @bind-Value=_newMessage.Text
-							   class="form-control" placeholder="type your message here..." />
-				</div>
-				<div class="col-2">
-					@if (!_sending)
-					{
-						<button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
-					}
-
-				</div>
+				<InputText id="message" @bind-Value=_newMessage.Text
+						   class="form-control flex-fill" placeholder="پیام خود را بنویسید..." />
+				@if (!_sending)
+				{
+					<button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
+				}
 			</div>
-		</EditForm>
-	</div>
+		</div>
+	</EditForm>
 </div>
 
 @code {

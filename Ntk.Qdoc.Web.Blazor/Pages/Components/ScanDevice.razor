@@ -52,7 +52,7 @@ else
 		ScanedUser = ChatService.CheckUserExist(this.LoggedUser, scan.Code);
 		if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
 		{
-			onActionUserFind.InvokeAsync(ScanedUser);
+			await onActionUserFind.InvokeAsync(ScanedUser);
 		}
 		else
 		{
@@ -61,13 +61,13 @@ else
 		_sending = false;
 	}
 
-	private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+	private async Task LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
 	{
 		if (args.BarcodeText.LastIndexOf("/") > 0)
 		{
 			this.scan.Code = args.BarcodeText.Substring(args.BarcodeText.LastIndexOf("/") + 1);
-			this.HandleValidSubmit();
-			StateHasChanged();
+			await this.HandleValidSubmit();
+			await InvokeAsync(StateHasChanged);
 		}
 
 	}

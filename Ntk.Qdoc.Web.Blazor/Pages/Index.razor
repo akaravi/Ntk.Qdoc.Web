@@ -16,20 +16,16 @@ else
 
 		var view = "scan";
 
-		<div class="col-12 img_background">
-			<div class="row">
-				<div class="col-md-2 col-lg-4 col-sm-1"></div>
-				<div class="col-md-8 col-lg-4 col-sm-10">
-
-					<h1 class="h3 mb-3 font-weight-bold">این بارکد را اسکن کنید</h1>
-
-					<img src="@_qRCodeBase64" style="width: inherit;" />
-
-					<h1>کد: @this.User.Username</h1>
-
-					<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بارکد سایرین را اسکن کنید</button>
+		<div class="hero-section">
+			<div class="surface-card qr-card">
+				<h1 class="h4 mb-3 font-weight-bold">این بارکد را اسکن کنید</h1>
+				<p class="sub-text">کد ورود منحصر به فرد شما برای اتصال سریع</p>
+				<img src="@_qRCodeBase64" alt="qr-code" />
+				<div class="code-pill">
+					<span>کد شما:</span>
+					<strong>@this.User.Username</strong>
 				</div>
-				<div class="col-md-2 col-lg-4 col-sm-1"></div>
+				<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block mt-2" type="button">بارکد سایرین را اسکن کنید</button>
 			</div>
 		</div>
 
@@ -38,65 +34,58 @@ else
 	{
 		var view = "main";
 
-		<div class="col-12 img_background">
-			<div class="row">
-				<div class="col-md-2 col-lg-3 "></div>
-				<div class="col-md-8 col-lg-6 col-sm-12">
-					<ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
-					<br />
-					<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بازگشت</button>
-				</div>
-				<div class="col-md-2 col-lg-3 "></div>
-
+		<div class="card-stack">
+			<div class="surface-card">
+				<h2 class="section-title">کد مخاطب را وارد یا اسکن کنید</h2>
+				<p class="sub-text">برای شروع گفتگو، کد را اسکن یا دستی وارد کنید</p>
+				<ScanDevice LoggedUser="User" onActionUserFind="(x)=>ActionScanedDevice(x)"></ScanDevice>
+				<br />
+				<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block" type="button">بازگشت</button>
 			</div>
 		</div>
 	}
 	@if (ViewSendMessageComponent)
 	{
-		<div class="row h-100">
-			<div class="col m-1">
-				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
-			</div>
+		<div class="surface-card">
+			<h2 class="section-title">ارسال پیام</h2>
+			<p class="sub-text">پیامی را به مخاطب انتخاب‌شده ارسال کنید</p>
+			<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
 		</div>
-
 	}
 	@if (ViewGetMessageComponent)
 	{
-		<div class="w-100 mb-2 chat-messages" style="min-height:200px;">
-			@if (null != _messages)
-			{
-				foreach (var message in _messages)
+		<div class="surface-card">
+			<div class="chat-messages mb-3">
+				@if (null != _messages)
 				{
-					<p class='msg'>
-						<div class='msg-meta'>
-							@if (!string.IsNullOrEmpty(message.ReceiverUsername))
-							{
-								<span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
-							}
-							else
-							{
-								<span class='who'>@title(message.Username)</span>
-							}
-							<span class='when'>@message.When</span>
-						</div>
-						<span class='what'>@message.Text</span>
-					</p>
+					foreach (var message in _messages)
+					{
+						<p class='msg'>
+							<div class='msg-meta'>
+								@if (!string.IsNullOrEmpty(message.ReceiverUsername))
+								{
+									<span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
+								}
+								else
+								{
+									<span class='who'>@title(message.Username)</span>
+								}
+								<span class='when'>@message.When</span>
+							</div>
+							<span class='what'>@message.Text</span>
+						</p>
+					}
 				}
-			}
-		</div>
-		<div class="row h-100">
-			<div class="col m-1">
-				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
 			</div>
+			<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
 		</div>
 	}
 	@if (ViewChatRoomComponnet)
 	{
-		<div class="row h-100">
+		<div class="chat-layout">
 			<Users />
-			<div class="col m-1 img_background">
+			<div class="surface-card">
 				<Chat />
-
 				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" AllowGetReceiverUsername="@true" />
 			</div>
 		</div>
@@ -156,12 +145,12 @@ else
 			}
 
 			_messages.Add(message);
-			this.ActionChangePage("get");
+			await this.ActionChangePage("get");
 		}
 	}
-	protected override void OnAfterRender(bool firstRender)
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		base.OnAfterRender(firstRender);
+		await base.OnAfterRenderAsync(firstRender);
 		if (firstRender)
 		{
 			this.User = this.ChatService.Login(User.Username, this.ConnectedClientService.Client);
@@ -169,7 +158,7 @@ else
 			{
 				if (id == "room")
 				{
-					ActionChangePage("room");
+					await ActionChangePage("room");
 				}
 				else
 				{
@@ -177,7 +166,7 @@ else
 					if (this.ScanedUser != null && !string.IsNullOrEmpty(ScanedUser.Username))
 					{
 						this.ReceiverUsername = ScanedUser.Username;
-						ActionChangePage("send");
+						await ActionChangePage("send");
 					}
 				}
 			}
@@ -198,7 +187,7 @@ else
 		{
 			await JsRuntime.InvokeVoidAsync("alert", "شناسه مورد نظر از ارتباط خارج شد"); // Alert
 
-			ActionChangePage("main");
+			await ActionChangePage("main");
 		}
 
 	}
