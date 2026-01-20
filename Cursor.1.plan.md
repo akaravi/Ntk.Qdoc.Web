@@ -85,3 +85,16 @@ Commands:
 
 Result 10
 - Workflow now builds and releases separate artifacts for all major platforms. Users can download platform-specific archives from GitHub Releases. Matrix strategy ensures parallel builds for faster release creation.
+
+## Part 11
+Commands:
+- transformed chat interface to modern real-time chat appearance with bubble-style messages.
+- implemented message bubbles: user's own messages on the right (green gradient), received messages on the left (dark background).
+- added message avatars with user initials, sender names for private messages, and relative time formatting.
+- implemented auto-scroll to bottom on new messages using JavaScript interop.
+- enhanced message form with modern rounded input field and send button with icon.
+- added chat header with message count, improved empty state with icon and hint text.
+- updated Chat.razor component to implement IDisposable properly and accept CurrentUser parameter.
+
+Result 11
+- Chat interface now looks like a modern messaging app (WhatsApp/Telegram style) with bubble messages, avatars, smooth animations, and auto-scrolling. Message form redesigned with modern rounded input and icon button. Better UX with visual feedback and responsive design.

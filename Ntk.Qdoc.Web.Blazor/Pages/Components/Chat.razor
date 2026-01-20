@@ -1,55 +1,114 @@
 ﻿@using System.Linq
+@using System
 @inject IChatService ChatService
-<div class="w-100 mb-3 chat-messages fade-in">
-	@if (null != _messages && _messages.Count > 0)
-	{
-		<div class="section-header">
-			<h3 class="title mb-0">پیام‌ها</h3>
-			<div class="meta">
-				<span class="badge-soft">@_messages.Count پیام</span>
-			</div>
-		</div>
-		foreach (var message in _messages)
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="chat-container">
+	<div class="chat-header">
+		<h3 class="chat-title">پیام‌ها</h3>
+		@if (_messages != null && _messages.Count > 0)
 		{
-			<p class='msg'>
-				<div class='msg-meta'>
-					@if (!string.IsNullOrEmpty(message.ReceiverUsername))
-					{
-						<span class='who'>@message.Username > @message.ReceiverUsername</span>
-					}
-					else
-					{
-						<span class='who'>@message.Username</span>
-					}
-					<span class='when'>@message.When</span>
-				</div>
-				<span class='what'>@message.Text</span>
-			</p>
+			<span class="chat-count">@_messages.Count</span>
 		}
-	}
-	else
-	{
-		<div class="empty-state">پیامی برای نمایش وجود ندارد.</div>
-	}
+	</div>
+	<div class="chat-messages" @ref="_messagesContainer">
+		@if (null != _messages && _messages.Count > 0)
+		{
+			foreach (var message in _messages)
+			{
+				var isMyMessage = !string.IsNullOrEmpty(CurrentUser) && message.Username == CurrentUser;
+				var isPrivateMessage = !string.IsNullOrEmpty(message.ReceiverUsername);
+				
+				<div class="message-wrapper @(isMyMessage ? "message-sent" : "message-received")">
+					@if (!isMyMessage)
+					{
+						<div class="message-avatar">
+							@message.Username.Substring(0, 1).ToUpper()
+						</div>
+					}
+					<div class="message-bubble">
+						@if (isPrivateMessage && !isMyMessage)
+						{
+							<div class="message-sender">@message.Username</div>
+						}
+						<div class="message-text">@message.Text</div>
+						<div class="message-time">@FormatTime(message.When)</div>
+					</div>
+				</div>
+			}
+		}
+		else
+		{
+			<div class="empty-state">
+				<div class="empty-icon">💬</div>
+				<p>هنوز پیامی ارسال نشده است</p>
+				<span class="empty-hint">اولین پیام را ارسال کنید</span>
+			</div>
+		}
+	</div>
 </div>
+
 @code {
+	[Parameter]
+	public string CurrentUser { get; set; }
+
 	private List<MessageModel> _messages;
+	private ElementReference _messagesContainer;
 
 	protected override void OnInitialized()
 	{
 		ChatService.MessageReceived += OnMessage;
-
 		_messages = new List<MessageModel>();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender && _messages != null && _messages.Count > 0)
+		{
+			await ScrollToBottom();
+		}
+		await base.OnAfterRenderAsync(firstRender);
 	}
 
 	private async void OnMessage(object sender, MessageModel message)
 	{
 		_messages.Add(message);
 		await InvokeAsync(StateHasChanged);
+		await ScrollToBottom();
 	}
 
-	private void Dispose()
+	private async Task ScrollToBottom()
 	{
-		ChatService.MessageReceived -= OnMessage;
+		try
+		{
+			await JSRuntime.InvokeVoidAsync("scrollChatToBottom", _messagesContainer);
+		}
+		catch { }
 	}
-        }
+
+	private string FormatTime(DateTime when)
+	{
+		var now = DateTime.Now;
+		var diff = now - when;
+
+		if (diff.TotalMinutes < 1)
+			return "الان";
+		if (diff.TotalHours < 1)
+			return $"{(int)diff.TotalMinutes} دقیقه پیش";
+		if (diff.TotalDays < 1)
+			return $"{(int)diff.TotalHours} ساعت پیش";
+		if (diff.TotalDays < 7)
+			return $"{(int)diff.TotalDays} روز پیش";
+		
+		return when.ToString("dd MMM yyyy HH:mm");
+	}
+
+	public void Dispose()
+	{
+		if (ChatService != null)
+		{
+			ChatService.MessageReceived -= OnMessage;
+		}
+	}
+}

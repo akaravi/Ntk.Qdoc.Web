@@ -34,5 +34,12 @@
 	<script src="_framework/blazor.server.js"></script>
 	<script src="_content/BlazorBarcodeScanner.ZXing.JS/zxingjs.index.min.js"></script>
 	<script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
+	<script>
+		window.scrollChatToBottom = function(element) {
+			if (element) {
+				element.scrollTop = element.scrollHeight;
+			}
+		};
+	</script>
 </body>
 </html>

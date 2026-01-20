@@ -3,18 +3,31 @@
 <div class="msg-form-container">
 	<EditForm Model=@_newMessage OnValidSubmit="HandleValidSubmit">
 		<div class="form-group w-100">
-			<div class="d-flex flex-wrap align-items-center gap-2">
+			<div class="message-input-wrapper">
 				@if (AllowGetReceiverUsername)
 				{
-					<InputText id="device" @bind-Value=@ReceiverUsername
-							   class="form-control flex-fill" placeholder="کد دستگاه گیرنده" />
+					<div class="receiver-input-wrapper">
+						<i class="fa fa-user"></i>
+						<InputText id="device" @bind-Value=@ReceiverUsername
+								   class="form-control receiver-input" placeholder="کد گیرنده (اختیاری)" />
+					</div>
 				}
-				<InputText id="message" @bind-Value=_newMessage.Text
-						   class="form-control flex-fill" placeholder="پیام خود را بنویسید..." />
-				@if (!_sending)
-				{
-					<button type="submit" class="btn btn-primary btn-block"><i class="fa fa-comment"></i></button>
-				}
+				<div class="message-input-group">
+					<InputText id="message" @bind-Value=_newMessage.Text
+							   class="form-control message-input" placeholder="پیام خود را بنویسید..." />
+					@if (!_sending)
+					{
+						<button type="submit" class="btn btn-primary send-button" title="ارسال">
+							<i class="fa fa-paper-plane"></i>
+						</button>
+					}
+					else
+					{
+						<button type="button" class="btn btn-primary send-button" disabled>
+							<i class="fa fa-spinner fa-spin"></i>
+						</button>
+					}
+				</div>
 			</div>
 		</div>
 	</EditForm>
