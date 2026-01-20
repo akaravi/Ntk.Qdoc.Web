@@ -75,3 +75,13 @@ Commands:
 
 Result 9
 - UI feels more informative and polished (counts, badges, animations) with improved visual hierarchy for chat and user lists.
+
+## Part 10
+Commands:
+- enhanced GitHub Actions workflow to support multi-platform builds (win-x64, win-x86, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64).
+- restructured workflow into three jobs: get-version (extracts version from csproj), build (matrix strategy for all platforms), create-release (downloads artifacts and creates release).
+- each platform builds and publishes separately with appropriate archive format (zip for Windows, tar.gz for Linux/macOS).
+- artifacts are uploaded per platform and then collected in create-release job for final release package.
+
+Result 10
+- Workflow now builds and releases separate artifacts for all major platforms. Users can download platform-specific archives from GitHub Releases. Matrix strategy ensures parallel builds for faster release creation.

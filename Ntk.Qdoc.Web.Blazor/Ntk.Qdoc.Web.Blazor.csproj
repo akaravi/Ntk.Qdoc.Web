@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Version>9.26.120.1</Version>
+    		<SatelliteResourceLanguages>en-US;en</SatelliteResourceLanguages>
   </PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="BlazorBarcodeScanner.ZXing.JS" Version="0.2.5" />

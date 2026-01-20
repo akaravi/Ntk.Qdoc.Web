@@ -17,22 +17,15 @@ env:
   PROJECT_PATH: 'Ntk.Qdoc.Web.Blazor/Ntk.Qdoc.Web.Blazor.csproj'
 
 jobs:
-  build-and-release:
+  get-version:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
+    outputs:
+      version: ${{ steps.final_version.outputs.version }}
+      version_tag: ${{ steps.final_version.outputs.version_tag }}
+      release_name: ${{ steps.final_version.outputs.release_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Extract version from csproj
         id: csproj_version
@@ -84,6 +77,54 @@ jobs:
           echo "release_name=Release v$FINAL_VERSION" >> $GITHUB_OUTPUT
           echo "Final version: $FINAL_VERSION"
 
+  build:
+    needs: get-version
+    strategy:
+      matrix:
+        runtime: 
+          - win-x64
+          - win-x86
+          - win-arm64
+          - linux-x64
+          - linux-arm64
+          - osx-x64
+          - osx-arm64
+        include:
+          - runtime: win-x64
+            os: windows-latest
+            archive_format: zip
+          - runtime: win-x86
+            os: windows-latest
+            archive_format: zip
+          - runtime: win-arm64
+            os: windows-latest
+            archive_format: zip
+          - runtime: linux-x64
+            os: ubuntu-latest
+            archive_format: tar.gz
+          - runtime: linux-arm64
+            os: ubuntu-latest
+            archive_format: tar.gz
+          - runtime: osx-x64
+            os: macos-latest
+            archive_format: tar.gz
+          - runtime: osx-arm64
+            os: macos-latest
+            archive_format: tar.gz
+    
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
       - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION_PATH }}
 
@@ -94,24 +135,74 @@ jobs:
         continue-on-error: true
         run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" || echo "No tests found or tests failed, continuing..."
 
-      - name: Publish application
+      - name: Publish application for ${{ matrix.runtime }}
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} \
             --configuration Release \
-            --output ./publish \
+            --runtime ${{ matrix.runtime }} \
+            --self-contained false \
+            --output ./publish/${{ matrix.runtime }} \
             --no-build
 
-      - name: Create archive
+      - name: Create archive for ${{ matrix.runtime }}
+        shell: bash
         run: |
-          cd publish
-          zip -r ../Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip .
-          cd ..
-          tar -czf Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz -C publish .
+          cd publish/${{ matrix.runtime }}
+          if [ "${{ matrix.archive_format }}" == "zip" ]; then
+            if command -v zip &> /dev/null; then
+              zip -r ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip .
+            else
+              # Fallback for Windows using PowerShell
+              powershell Compress-Archive -Path * -DestinationPath ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip -Force
+            fi
+          else
+            tar -czf ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.tar.gz .
+          fi
+          cd ../..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.runtime }}
+          path: |
+            Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.${{ matrix.archive_format }}
+          retention-days: 1
+          if-no-files-found: error
+
+  create-release:
+    needs: [get-version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: List all artifacts
+        run: |
+          find ./artifacts -type f -name "*.zip" -o -name "*.tar.gz" | sort
+
+      - name: Prepare artifact list
+        id: artifact_list
+        shell: bash
+        run: |
+          ARTIFACTS=$(find ./artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) | sort | xargs -I {} basename {})
+          echo "artifacts<<EOF" >> $GITHUB_OUTPUT
+          echo "$ARTIFACTS" | while read line; do
+            echo "- $line" >> $GITHUB_OUTPUT
+          done
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Create file list for upload
+          find ./artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) | sort > artifact_files.txt
 
       - name: Check if release exists
         id: check_release
         run: |
-          if gh release view "${{ steps.final_version.outputs.version_tag }}" 2>/dev/null; then
+          if gh release view "${{ needs.get-version.outputs.version_tag }}" 2>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "Release already exists"
           else
@@ -122,33 +213,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create or update release
+      - name: Create release
         if: steps.check_release.outputs.exists != 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.final_version.outputs.version_tag }}
-          name: ${{ steps.final_version.outputs.release_name }}
+          tag_name: ${{ needs.get-version.outputs.version_tag }}
+          name: ${{ needs.get-version.outputs.release_name }}
           body: |
-            ## Release v${{ steps.final_version.outputs.version }}
+            ## Release v${{ needs.get-version.outputs.version }}
             
             ### 🚀 Changes
             This release was automatically created from the `publish` branch.
             
-            ### 📦 Artifacts
-            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
-            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            ### 📦 Platform-Specific Artifacts
+            ${{ steps.artifact_list.outputs.artifacts }}
+            
+            #### Supported Platforms:
+            - **Windows**: win-x64, win-x86, win-arm64
+            - **Linux**: linux-x64, linux-arm64
+            - **macOS**: osx-x64 (Intel), osx-arm64 (Apple Silicon)
             
             ### 📝 Build Information
-            - **Build Date**: ${{ github.event.head_commit.timestamp || github.run_started_at }}
+            - **Build Date**: ${{ github.event.head_commit.timestamp }}
             - **Commit**: ${{ github.sha }}
             - **Branch**: ${{ github.ref_name }}
             
             ### 🛠️ Installation
-            1. Extract the archive
-            2. Run `dotnet Ntk.Qdoc.Web.Blazor.dll` in the extracted folder
+            1. Download the archive for your platform
+            2. Extract the archive
+            3. Run `dotnet Ntk.Qdoc.Web.Blazor.dll` in the extracted folder
           files: |
-            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
-            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            ./artifacts/**/*.zip
+            ./artifacts/**/*.tar.gz
           draft: false
           prerelease: false
         env:
@@ -158,25 +254,34 @@ jobs:
         if: steps.check_release.outputs.exists == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.final_version.outputs.version_tag }}
-          name: ${{ steps.final_version.outputs.release_name }}
+          tag_name: ${{ needs.get-version.outputs.version_tag }}
+          name: ${{ needs.get-version.outputs.release_name }}
           body: |
-            ## Release v${{ steps.final_version.outputs.version }} (Updated)
+            ## Release v${{ needs.get-version.outputs.version }} (Updated)
             
             ### 🚀 Changes
             This release was automatically updated from the `publish` branch.
             
-            ### 📦 Artifacts
-            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
-            - Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            ### 📦 Platform-Specific Artifacts
+            ${{ steps.artifact_list.outputs.artifacts }}
+            
+            #### Supported Platforms:
+            - **Windows**: win-x64, win-x86, win-arm64
+            - **Linux**: linux-x64, linux-arm64
+            - **macOS**: osx-x64 (Intel), osx-arm64 (Apple Silicon)
             
             ### 📝 Build Information
-            - **Build Date**: ${{ github.event.head_commit.timestamp || github.run_started_at }}
+            - **Build Date**: ${{ github.event.head_commit.timestamp }}
             - **Commit**: ${{ github.sha }}
             - **Branch**: ${{ github.ref_name }}
+            
+            ### 🛠️ Installation
+            1. Download the archive for your platform
+            2. Extract the archive
+            3. Run `dotnet Ntk.Qdoc.Web.Blazor.dll` in the extracted folder
           files: |
-            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.zip
-            Ntk.Qdoc.Web.Blazor-v${{ steps.final_version.outputs.version }}.tar.gz
+            ./artifacts/**/*.zip
+            ./artifacts/**/*.tar.gz
           draft: false
           prerelease: false
         env:
