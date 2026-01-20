@@ -11,6 +11,23 @@
 }
 else
 {
+	@if (ShowIntroModal)
+	{
+		<div class="app-modal-backdrop">
+			<div class="app-modal">
+				<h2 class="app-modal-title">راهنمای استفاده از سیستم پیام‌رسان</h2>
+				<p>
+					این سیستم پیام‌رسان بدون استفاده از بانک اطلاعات و بر اساس فناوری سوکت پیاده‌سازی شده است
+					و هیچ‌یک از پیام‌ها و داده‌های شما در سرور ذخیره نمی‌شود.
+				</p>
+				<p>
+					در صورتی که در متن چت آدرس یک وب‌سایت را وارد کنید، طرف مقابل شما  به آن وب‌سایت منتقل می شود؛ بنابراین این سیستم برای پشتیبانی و راهنمایی آنلاین بسیار مناسب است.
+				</p>
+				<button class="btn btn-primary btn-block mt-3" @onclick="CloseIntroModal">متوجه شدم</button>
+			</div>
+		</div>
+	}
+
 	@if (ViewMainComponent)
 	{
 
@@ -102,6 +119,7 @@ else
 	private bool ViewMultiChatComponent = false;
 	private PostMessageViewModel _message = new PostMessageViewModel();
 	private string ReceiverUsername = "";
+	private bool ShowIntroModal = true;
 	protected override void OnInitialized()
 	{
 		if (null != this.ChatService)
@@ -256,4 +274,8 @@ else
 		this.ReceiverUsername = ScanedUser.Username;
 		await this.ActionChangePage("send");
 	}
-	            }
+	private void CloseIntroModal()
+	{
+		ShowIntroModal = false;
+	}
+            }

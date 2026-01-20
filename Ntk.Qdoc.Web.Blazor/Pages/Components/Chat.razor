@@ -74,9 +74,14 @@
 	{
 		ChatService.MessageReceived += OnMessage;
 		_messages = new List<MessageModel>();
-		
-		// بارگذاری تاریخچه پیام‌ها
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		// وقتی پارامترها تغییر می‌کنند (مثل ReceiverUsername یا ChatId)، تاریخچه را دوباره بارگذاری کن
 		LoadChatHistory();
+		await base.OnParametersSetAsync();
+		StateHasChanged();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -85,26 +90,36 @@
 		{
 			await ScrollToBottom();
 		}
+		// بعد از هر رندر، اگر پیامی داریم، به پایین اسکرول کن
+		if (_messages != null && _messages.Count > 0)
+		{
+			await ScrollToBottom();
+		}
 		await base.OnAfterRenderAsync(firstRender);
 	}
 
 	private void LoadChatHistory()
 	{
+		// همیشه لیست پیام‌ها را پاک کن و دوباره بارگذاری کن
+		_messages = new List<MessageModel>();
+		
 		if (!string.IsNullOrEmpty(ChatId))
 		{
 			// بارگذاری پیام‌های چت گروهی
 			var history = ChatService.GetMessagesForChat(ChatId, CurrentUser);
-			_messages = history.ToList();
+			if (history != null)
+			{
+				_messages = history.ToList();
+			}
 		}
 		else if (!string.IsNullOrEmpty(ReceiverUsername))
 		{
 			// بارگذاری پیام‌های چت خصوصی
 			var history = ChatService.GetPrivateChatMessages(CurrentUser, ReceiverUsername);
-			_messages = history.ToList();
-		}
-		else
-		{
-			_messages = new List<MessageModel>();
+			if (history != null)
+			{
+				_messages = history.ToList();
+			}
 		}
 	}
 

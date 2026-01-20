@@ -76,21 +76,34 @@
 
     protected override void OnInitialized()
     {
-        if (ConnectedClientService?.Client != null && ChatService != null)
-        {
-            // سعی می‌کنیم کاربر فعلی را پیدا کنیم
-            var allUsers = ChatService.GetAllUsers();
-            var currentUser = allUsers.FirstOrDefault(u => u.Client?.Id == ConnectedClientService.Client.Id);
-            if (currentUser != null)
-            {
-                _currentUsername = currentUser.Username;
-            }
-        }
-
         if (ChatService != null)
         {
             ChatService.UserLoggedIn += OnUserLoggedIn;
             ChatService.UserLoggedOut += OnUserLoggedOut;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && ConnectedClientService?.Client != null && ChatService != null)
+        {
+            // سعی می‌کنیم کاربر فعلی را پیدا کنیم
+            await LoadCurrentUser();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        if (ConnectedClientService?.Client != null && ChatService != null)
+        {
+            var allUsers = ChatService.GetAllUsers();
+            var currentUser = allUsers.FirstOrDefault(u => u.Client?.Id == ConnectedClientService.Client.Id);
+            if (currentUser != null && _currentUsername != currentUser.Username)
+            {
+                _currentUsername = currentUser.Username;
+                await InvokeAsync(StateHasChanged);
+            }
         }
     }
 

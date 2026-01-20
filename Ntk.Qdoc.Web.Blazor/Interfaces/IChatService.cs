@@ -28,5 +28,6 @@ namespace Ntk.Qdoc.Web.Blazor.Interfaces
         IEnumerable<MessageModel> GetPrivateChatMessages(string user1, string user2);
         IEnumerable<ChatThreadModel> GetChatThreadsForUser(string username);
         IEnumerable<ChatThreadModel> GetActiveChatThreadsForUser(string username);
+        List<string> GetUsersWithPrivateChatHistory(string username);
     }
 }

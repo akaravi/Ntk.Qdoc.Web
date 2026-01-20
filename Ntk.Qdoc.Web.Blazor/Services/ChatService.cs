@@ -79,7 +79,8 @@ namespace Ntk.Qdoc.Web.Blazor.Services
 
         public async Task PostMessageAsync(UserModel user, string userCode, string message)
         {
-            await _publisher.PublishAsync(new MessageModel(user.Username, userCode, message, DateTime.UtcNow));
+            var msg = new MessageModel(user.Username, userCode, message, DateTime.UtcNow);
+            await _publisher.PublishAsync(msg);
         }
 
         // New group chat methods
@@ -144,7 +145,52 @@ namespace Ntk.Qdoc.Web.Blazor.Services
             if (string.IsNullOrEmpty(username))
                 return Enumerable.Empty<ChatThreadModel>();
 
-            return _chatThreadService.GetChatThreadsForUser(username);
+            // ابتدا threadهای گروهی را می‌گیریم
+            var groupChats = _chatThreadService.GetChatThreadsForUser(username).ToList();
+            
+            // سپس چت‌های خصوصی را از messageRepository پیدا می‌کنیم
+            var allUsers = _usersProvider.GetAll();
+            var privateChats = new List<ChatThreadModel>();
+
+            foreach (var user in allUsers)
+            {
+                if (user.Username == username)
+                    continue;
+
+                // بررسی می‌کنیم آیا پیامی بین این دو کاربر رد و بدل شده یا نه
+                var messages = _messageRepository.GetPrivateChatMessages(username, user.Username, 1);
+                if (messages.Any())
+                {
+                    // یک ChatThreadModel برای چت خصوصی ایجاد می‌کنیم
+                    var privateThread = new ChatThreadModel(
+                        new List<string> { username, user.Username },
+                        username,
+                        user.Username  // ChatName = نام کاربر مقابل
+                    );
+                    
+                    // ChatId را null نگه می‌داریم تا مشخص باشد که این یک چت خصوصی است
+                    privateThread.ChatId = null;
+
+                    // آخرین پیام را پیدا می‌کنیم
+                    var lastMessage = messages.OrderByDescending(m => m.When).FirstOrDefault();
+                    if (lastMessage != null)
+                    {
+                        privateThread.LastMessageTime = lastMessage.When;
+                        privateThread.LastMessagePreview = lastMessage.Text;
+                        if (privateThread.LastMessagePreview.Length > 50)
+                        {
+                            privateThread.LastMessagePreview = privateThread.LastMessagePreview.Substring(0, 50) + "...";
+                        }
+                    }
+
+                    privateChats.Add(privateThread);
+                }
+            }
+
+            // ترکیب threadهای گروهی و خصوصی و مرتب‌سازی بر اساس زمان آخرین پیام
+            return groupChats.Concat(privateChats)
+                .OrderByDescending(ct => ct.LastMessageTime)
+                .ToList();
         }
 
         public IEnumerable<ChatThreadModel> GetActiveChatThreadsForUser(string username)
@@ -199,6 +245,37 @@ namespace Ntk.Qdoc.Web.Blazor.Services
             return groupChats.Concat(privateChats)
                 .OrderByDescending(ct => ct.LastMessageTime)
                 .ToList();
+        }
+
+        /// <summary>
+        /// دریافت لیست کاربرانی که با آنها چت خصوصی داشته‌ایم و آنلاین هستند
+        /// </summary>
+        public List<string> GetUsersWithPrivateChatHistory(string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return new List<string>();
+
+            var allUsers = _usersProvider.GetAll();
+            var usersWithHistory = new List<string>();
+
+            foreach (var user in allUsers)
+            {
+                if (user.Username == username)
+                    continue;
+
+                // فقط کاربران آنلاین را بررسی می‌کنیم
+                if (user.Client == null)
+                    continue;
+
+                // بررسی می‌کنیم آیا پیامی بین این دو کاربر رد و بدل شده یا نه
+                var messages = _messageRepository.GetPrivateChatMessages(username, user.Username, 1);
+                if (messages.Any())
+                {
+                    usersWithHistory.Add(user.Username);
+                }
+            }
+
+            return usersWithHistory.OrderBy(u => u).ToList();
         }
     }
 }

@@ -189,6 +189,10 @@ nav.nav-main {
     .nav-toggle {
         display: block;
     }
+    
+    .nav-user-info {
+        display: none;
+    }
 }
 
 .page-container {
@@ -252,6 +256,42 @@ nav.nav-main {
     list-style: none;
     padding: 0;
     margin: 16px 0 0;
+}
+
+/* Intro modal on landing page */
+.app-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 9, 20, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.app-modal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: var(--shadow);
+    text-align: right;
+}
+
+.app-modal-title {
+    margin: 0 0 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.app-modal p {
+    margin: 0 0 8px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.7;
 }
 
 .features-list li {
@@ -1337,6 +1377,91 @@ input::placeholder, textarea::placeholder {
     margin: 0;
     font-size: 1.1rem;
     color: var(--text);
+}
+
+.new-chat-input-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.new-chat-input-section .input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.new-chat-input-section .input-group .form-control {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.new-chat-input-section .input-group .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.new-chat-input-section .input-group .btn {
+    padding: 8px 16px;
+    white-space: nowrap;
+}
+
+.previous-chats-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.previous-chats-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.previous-chats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.previous-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.previous-chat-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--primary);
+}
+
+.previous-chat-item i:first-child {
+    color: var(--muted);
+    width: 16px;
+}
+
+.previous-chat-item span {
+    flex: 1;
+}
+
+.previous-chat-item i:last-child {
+    color: var(--muted);
+    font-size: 0.8rem;
 }
 
 .chat-threads-list {

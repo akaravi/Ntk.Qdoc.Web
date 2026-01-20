@@ -1,7 +1,10 @@
 @inject IChatService ChatService
+@using System
 @using System.Linq
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
 @using Ntk.Qdoc.Web.Blazor.Models
+@implements IDisposable
 
 <div class="multi-chat-view">
 	<div class="chat-threads-panel">
@@ -11,6 +14,42 @@
 				<i class="fa fa-plus"></i> چت جدید
 			</button>
 		</div>
+		
+		<div class="new-chat-input-section">
+			<div class="input-group">
+				<InputText @bind-Value="_newChatUsername" 
+						   @onkeypress="OnKeyPress"
+						   @onkeydown="OnKeyDown"
+						   @oninput="OnInputChanged"
+						   pattern="[0-9]*"
+						   inputmode="numeric"
+						   type="text"
+						   class="form-control" 
+						   placeholder="شماره کاربر برای چت جدید..." />
+				<button class="btn btn-sm btn-primary" @onclick="StartChatByUsername" title="شروع چت">
+					<i class="fa fa-search"></i>
+				</button>
+			</div>
+		</div>
+		
+		@if (_previousChatUsers != null && _previousChatUsers.Any())
+		{
+			<div class="previous-chats-section">
+				<h4 class="previous-chats-title">
+					<i class="fa fa-history"></i> چت‌های قبلی
+				</h4>
+				<div class="previous-chats-list">
+					@foreach (var username in _previousChatUsers)
+					{
+						<div class="previous-chat-item" @onclick="() => StartPrivateChat(username)">
+							<i class="fa fa-user"></i>
+							<span>@username</span>
+							<i class="fa fa-chevron-left"></i>
+						</div>
+					}
+				</div>
+			</div>
+		}
 		
 		<div class="chat-threads-list">
 			@if (_chatThreads != null && _chatThreads.Any())
@@ -65,12 +104,12 @@
 	<div class="chat-content-panel">
 		@if (!string.IsNullOrEmpty(SelectedChatId))
 		{
-			<Chat CurrentUser="@CurrentUser" ChatId="@SelectedChatId" />
+			<Chat CurrentUser="@CurrentUser" ChatId="@SelectedChatId" @key="@SelectedChatId" />
 			<MessageForm LoggedUser="@_loggedUser" ChatId="@SelectedChatId" />
 		}
 		else if (!string.IsNullOrEmpty(_selectedReceiverUsername))
 		{
-			<Chat CurrentUser="@CurrentUser" ReceiverUsername="@_selectedReceiverUsername" />
+			<Chat CurrentUser="@CurrentUser" ReceiverUsername="@_selectedReceiverUsername" @key="@_selectedReceiverUsername" />
 			<MessageForm LoggedUser="@_loggedUser" ReceiverUsername="@_selectedReceiverUsername" />
 		}
 		else
@@ -112,24 +151,48 @@
 	private string _selectedReceiverUsername { get; set; }
 	private bool _showCreateGroupDialog = false;
 	private string _newChatName = "";
+	private string _newChatUsername = "";
 	private UserModel _loggedUser;
+	private List<string> _previousChatUsers;
 
 	protected override void OnInitialized()
 	{
 		_loggedUser = new UserModel(CurrentUser);
 		LoadChatThreads();
+		LoadPreviousChatUsers();
+
+		if (ChatService != null)
+		{
+			ChatService.MessageReceived += OnMessageReceived;
+		}
 	}
 
 	private void LoadChatThreads()
 	{
 		if (!string.IsNullOrEmpty(CurrentUser))
 		{
-			// نمایش تمام threadهایی که کاربر در آنها است (حتی بدون پیام)
+			// نمایش تمام threadهایی که کاربر در آنها است (همه چت‌ها - نه فقط فعال)
 			_chatThreads = ChatService.GetChatThreadsForUser(CurrentUser);
 		}
 	}
 
-	private void SelectThread(ChatThreadModel thread)
+	private void LoadPreviousChatUsers()
+	{
+		if (!string.IsNullOrEmpty(CurrentUser))
+		{
+			_previousChatUsers = ChatService.GetUsersWithPrivateChatHistory(CurrentUser);
+		}
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		// وقتی CurrentUser تغییر کرد، threadها و لیست کاربران قبلی را دوباره بارگذاری کن
+		LoadChatThreads();
+		LoadPreviousChatUsers();
+		await base.OnParametersSetAsync();
+	}
+
+	private async void SelectThread(ChatThreadModel thread)
 	{
 		if (thread == null)
 			return;
@@ -153,7 +216,125 @@
 		
 		// Reset unread count when chat is selected
 		thread.ResetUnreadCount(CurrentUser);
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private void StartPrivateChat(string username)
+	{
+		if (string.IsNullOrEmpty(username))
+			return;
+
+		// شروع چت خصوصی با کاربر انتخاب شده
+		SelectedChatId = null;
+		_selectedReceiverUsername = username;
+		
+		// threadها را refresh کن تا thread جدید اضافه شود
+		LoadChatThreads();
 		InvokeAsync(StateHasChanged);
+	}
+
+	private async Task OnKeyPress(KeyboardEventArgs e)
+	{
+		// اگر Enter فشرده شد، چت را شروع کن
+		if (e.Key == "Enter")
+		{
+			await StartChatByUsername();
+			return;
+		}
+
+		// فقط اعداد را بپذیر
+		if (!string.IsNullOrEmpty(e.Key) && e.Key.Length == 1)
+		{
+			if (!char.IsDigit(e.Key[0]))
+			{
+				// اگر عدد نبود، مقدار را در سطح input کنترل می‌کنیم (از طریق OnInputChanged)
+			}
+		}
+	}
+
+	private void OnKeyDown(KeyboardEventArgs e)
+	{
+		// اجازه دادن به کلیدهای کنترل (Backspace, Delete, Arrow keys, Tab, etc.)
+		var allowedKeys = new[] { "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Tab", "Home", "End", "Enter" };
+		if (allowedKeys.Contains(e.Key))
+		{
+			return; // اجازه دادن به این کلیدها
+		}
+
+		// اگر کلید Ctrl یا Alt فشرده شده، اجازه بده (برای copy/paste)
+		if (e.CtrlKey || e.AltKey || e.MetaKey)
+		{
+			return;
+		}
+
+		// برای سایر کلیدها، بررسی کن که آیا عدد است
+		if (!string.IsNullOrEmpty(e.Key) && e.Key.Length == 1)
+		{
+			if (!char.IsDigit(e.Key[0]))
+			{
+				// اگر عدد نبود، مقدار واقعی از طریق OnInputChanged فیلتر می‌شود
+			}
+		}
+	}
+
+	private void OnInputChanged(ChangeEventArgs e)
+	{
+		// حذف تمام کاراکترهای غیر عددی از مقدار وارد شده
+		if (e.Value != null)
+		{
+			var inputValue = e.Value.ToString();
+			var numericOnly = new string(inputValue.Where(char.IsDigit).ToArray());
+			_newChatUsername = numericOnly;
+		}
+	}
+
+	private async Task StartChatByUsername()
+	{
+		if (string.IsNullOrEmpty(_newChatUsername))
+			return;
+
+		var username = _newChatUsername.Trim();
+		
+		// بررسی می‌کنیم آیا کاربر وجود دارد
+		var targetUser = ChatService.GetAllUsers().FirstOrDefault(u => 
+			u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+
+		if (targetUser == null)
+		{
+			// کاربر پیدا نشد
+			Console.WriteLine($"User {username} not found");
+			_newChatUsername = "";
+			return;
+		}
+
+		// شروع چت با کاربر
+		SelectedChatId = null;
+		_selectedReceiverUsername = targetUser.Username;
+		_newChatUsername = "";
+		
+		// threadها را refresh کن
+		LoadChatThreads();
+		LoadPreviousChatUsers();
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private async void OnMessageReceived(object sender, MessageModel message)
+	{
+		if (message == null || string.IsNullOrEmpty(CurrentUser))
+			return;
+
+		// فقط اگر پیام مربوط به کاربر فعلی باشد لیست را به‌روزرسانی کن
+		var isRelated =
+			message.Username == CurrentUser ||
+			message.ReceiverUsername == CurrentUser ||
+			!string.IsNullOrEmpty(message.ChatId);
+
+		if (!isRelated)
+			return;
+
+		LoadChatThreads();
+		LoadPreviousChatUsers();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	private void ShowCreateGroupChat()
@@ -208,5 +389,13 @@
 			return $"{(int)diff.TotalDays}ر";
 
 		return when.ToString("MM/dd");
+	}
+
+	public void Dispose()
+	{
+		if (ChatService != null)
+		{
+			ChatService.MessageReceived -= OnMessageReceived;
+		}
 	}
 }
