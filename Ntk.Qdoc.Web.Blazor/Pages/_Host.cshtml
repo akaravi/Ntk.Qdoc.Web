@@ -10,11 +10,14 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Ntk.Qdoc.Web.Blazor</title>
+	<title>Qdoc پیام‌رسان - سیستم چت بدون دیتابیس</title>
 	<base href="~/" />
 	<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
 	<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 	<link href="css/site.css" rel="stylesheet" />
+	<link rel="manifest" href="manifest.json" />
+	<meta name="theme-color" content="#27c2a0" />
+	<link rel="apple-touch-icon" href="images/1.jpg" />
 </head>
 <body class='text-center'>
 	<app>
@@ -35,11 +38,47 @@
 	<script src="_content/BlazorBarcodeScanner.ZXing.JS/zxingjs.index.min.js"></script>
 	<script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
 	<script>
-		window.scrollChatToBottom = function(element) {
+		window.scrollChatToBottom = function (element) {
 			if (element) {
 				element.scrollTop = element.scrollHeight;
 			}
 		};
+
+		// صدای ساده «دینگ» برای پیام‌های جدید
+		window.playMessageSound = function () {
+			try {
+				var AudioContext = window.AudioContext || window.webkitAudioContext;
+				if (!AudioContext) {
+					return;
+				}
+
+				var ctx = new AudioContext();
+				var osc = ctx.createOscillator();
+				var gain = ctx.createGain();
+
+				osc.type = "sine";
+				osc.frequency.value = 880;
+				gain.gain.value = 0.15;
+
+				osc.connect(gain);
+				gain.connect(ctx.destination);
+
+				osc.start();
+				osc.stop(ctx.currentTime + 0.15);
+			} catch (e) {
+				console.warn("playMessageSound error", e);
+			}
+		};
+
+		// ثبت سرویس‌ورکر برای PWA
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', function () {
+				navigator.serviceWorker.register('/service-worker.js')
+					.catch(function (err) {
+						console.warn('service worker registration failed', err);
+					});
+			});
+		}
 	</script>
 </body>
 </html>

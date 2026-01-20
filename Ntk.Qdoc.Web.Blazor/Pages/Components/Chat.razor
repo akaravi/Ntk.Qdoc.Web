@@ -148,6 +148,24 @@
 		if (shouldShow)
 		{
 			_messages.Add(message);
+
+			// پخش صدای پیام جدید (دینگ)
+			try
+			{
+				// فقط برای پیام‌هایی که از کاربر فعلی نیستند
+				var isMyMessage = !string.IsNullOrEmpty(CurrentUser) &&
+								  !string.IsNullOrEmpty(message.Username) &&
+								  message.Username.Trim().Equals(CurrentUser.Trim(), StringComparison.OrdinalIgnoreCase) == false;
+				if (isMyMessage)
+				{
+					await JSRuntime.InvokeVoidAsync("playMessageSound");
+				}
+			}
+			catch
+			{
+				// در صورت بروز خطا در صدا، چت همچنان باید کار کند
+			}
+
 			await InvokeAsync(StateHasChanged);
 			await ScrollToBottom();
 		}

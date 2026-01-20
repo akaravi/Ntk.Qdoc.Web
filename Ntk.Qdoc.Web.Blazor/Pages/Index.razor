@@ -139,6 +139,19 @@ else
 
 		if (message.Username == User.Username || message.ReceiverUsername == User.Username)
 		{
+			// صدای پیام جدید برای کاربر فعلی
+			try
+			{
+				if (message.ReceiverUsername == User.Username)
+				{
+					await JsRuntime.InvokeVoidAsync("playMessageSound");
+				}
+			}
+			catch
+			{
+				// در صورت بروز خطا در صدا، ادامه‌ی منطق پیام نباید مختل شود
+			}
+
 			if (message.ReceiverUsername == User.Username)
 			{
 				if (message.Text.ToLower().IndexOf("https://") == 0 || message.Text.ToLower().IndexOf("http://") == 0)
