@@ -1,0 +1,81 @@
+@page "/multichat"
+@inject IChatService ChatService
+@inject IConnectedClientService ConnectedClientService
+@inject NavigationManager NavigationManager
+@using System.Linq
+@using Ntk.Qdoc.Web.Blazor.Interfaces
+@using Ntk.Qdoc.Web.Blazor.Models
+@using Ntk.Qdoc.Web.Blazor.Pages.Components
+@implements IDisposable
+
+@if (null == ConnectedClientService?.Client)
+{
+	<p>waiting for connection...</p>
+}
+else if (string.IsNullOrEmpty(_currentUsername))
+{
+	<p>در حال دریافت اطلاعات کاربر...</p>
+}
+else
+{
+	<div class="surface-card">
+		<MultiChatView CurrentUser="@_currentUsername" />
+	</div>
+}
+
+@code {
+	private string _currentUsername = "";
+
+	protected override void OnInitialized()
+	{
+		if (ChatService != null)
+		{
+			ChatService.UserLoggedIn += OnUserLoggedIn;
+		}
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender && ConnectedClientService?.Client != null)
+		{
+			await LoadCurrentUser();
+		}
+		await base.OnAfterRenderAsync(firstRender);
+	}
+
+	private async Task LoadCurrentUser()
+	{
+		if (ConnectedClientService?.Client != null && ChatService != null)
+		{
+			var allUsers = ChatService.GetAllUsers();
+			var currentUser = allUsers.FirstOrDefault(u => u.Client?.Id == ConnectedClientService.Client.Id);
+			if (currentUser != null)
+			{
+				_currentUsername = currentUser.Username;
+				await InvokeAsync(StateHasChanged);
+			}
+			else
+			{
+				// اگر کاربر پیدا نشد، به صفحه اصلی برگرد
+				NavigationManager.NavigateTo("/");
+			}
+		}
+	}
+
+	private void OnUserLoggedIn(object sender, UserLoginEventArgs args)
+	{
+		if (args?.User != null && args.User.Client?.Id == ConnectedClientService?.Client?.Id)
+		{
+			_currentUsername = args.User.Username;
+			InvokeAsync(StateHasChanged);
+		}
+	}
+
+	public void Dispose()
+	{
+		if (ChatService != null)
+		{
+			ChatService.UserLoggedIn -= OnUserLoggedIn;
+		}
+	}
+}

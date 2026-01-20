@@ -1,0 +1,306 @@
+@page "/api-docs"
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="page-content">
+    <div class="surface-card">
+        <h1 class="page-title">راهنمای API</h1>
+        <p class="sub-text">مستندات کامل API برای توسعه‌دهندگان</p>
+
+        <div class="api-docs-content">
+            <div class="api-section">
+                <h2 class="section-title">معرفی</h2>
+                <div class="api-info">
+                    <div class="info-item">
+                        <strong>Base URL:</strong>
+                        <code>@GetBaseUrl()/api/chat</code>
+                    </div>
+                    <div class="info-item">
+                        <strong>Authentication:</strong>
+                        <span class="badge-soft">Anonymous (فعلاً نیاز به احراز هویت ندارد)</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Format:</strong>
+                        <code>JSON</code>
+                    </div>
+                    <div class="info-item">
+                        <strong>HTTP Method:</strong>
+                        <code>POST</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">Endpoint: POST /api/chat</h2>
+                <p>این endpoint برای ارسال پیام از طریق API استفاده می‌شود.</p>
+
+                <h3>Request Body</h3>
+                <div class="code-block">
+                    <pre><code>{
+  "username": "string",           // نام کاربری فرستنده (الزامی)
+  "message": "string",            // متن پیام (الزامی)
+  "receiverUsername": "string"    // نام کاربری گیرنده (اختیاری - برای پیام خصوصی)
+}</code></pre>
+                </div>
+
+                <h3>Response</h3>
+                <p>در صورت موفقیت، پاسخ زیر بازگردانده می‌شود:</p>
+                <div class="code-block">
+                    <pre><code>HTTP 200 OK
+
+Task&lt;MessageModel&gt;</code></pre>
+                </div>
+
+                <h3>Status Codes</h3>
+                <ul class="status-codes-list">
+                    <li><strong>200 OK:</strong> پیام با موفقیت ارسال شد</li>
+                    <li><strong>400 Bad Request:</strong> اطلاعات ورودی نامعتبر است</li>
+                    <li><strong>500 Internal Server Error:</strong> خطای سرور</li>
+                </ul>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">مثال‌های کد</h2>
+
+                <div class="code-examples">
+                    <div class="code-tabs">
+                        <button class="code-tab @(_activeTab == "curl" ? "active" : "")" @onclick='@(() => SwitchTab("curl"))'>
+                            cURL
+                        </button>
+                        <button class="code-tab @(_activeTab == "javascript" ? "active" : "")" @onclick='@(() => SwitchTab("javascript"))'>
+                            JavaScript
+                        </button>
+                        <button class="code-tab @(_activeTab == "csharp" ? "active" : "")" @onclick='@(() => SwitchTab("csharp"))'>
+                            C#
+                        </button>
+                        <button class="code-tab @(_activeTab == "python" ? "active" : "")" @onclick='@(() => SwitchTab("python"))'>
+                            Python
+                        </button>
+                    </div>
+
+                    <div class="code-content">
+                        @if (_activeTab == "curl")
+                        {
+                            <div class="code-block">
+                                <pre><code># ارسال پیام عمومی
+curl -X POST @(GetBaseUrl())/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "device-a",
+    "message": "Hello from API"
+  }'
+
+# ارسال پیام خصوصی
+curl -X POST @(GetBaseUrl())/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "device-a",
+    "message": "Hello from API",
+    "receiverUsername": "device-b"
+  }'</code></pre>
+                            </div>
+                        }
+                        else if (_activeTab == "javascript")
+                        {
+                            <div class="code-block">
+                                <pre><code>// ارسال پیام عمومی
+fetch('@(GetBaseUrl())/api/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    username: 'device-a',
+    message: 'Hello from API'
+  })
+})
+.then(response => response.json())
+.then(data => console.log('Success:', data))
+.catch((error) => console.error('Error:', error));
+
+// ارسال پیام خصوصی
+fetch('@(GetBaseUrl())/api/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    username: 'device-a',
+    message: 'Hello from API',
+    receiverUsername: 'device-b' // optional
+  })
+});</code></pre>
+                            </div>
+                        }
+                        else if (_activeTab == "csharp")
+                        {
+                            <div class="code-block">
+                                <pre><code>using System;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+// ارسال پیام عمومی
+var client = new HttpClient();
+var requestBody = new
+{
+    username = "device-a",
+    message = "Hello from API"
+};
+
+var json = JsonSerializer.Serialize(requestBody);
+var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+var response = await client.PostAsync(
+    "@(GetBaseUrl())/api/chat", 
+    content
+);
+
+var responseContent = await response.Content.ReadAsStringAsync();
+
+// ارسال پیام خصوصی
+var privateMessage = new
+{
+    username = "device-a",
+    message = "Hello from API",
+    receiverUsername = "device-b"
+};
+
+var privateJson = JsonSerializer.Serialize(privateMessage);
+var privateContent = new StringContent(
+    privateJson, 
+    Encoding.UTF8, 
+    "application/json"
+);
+
+var privateResponse = await client.PostAsync(
+    "@(GetBaseUrl())/api/chat", 
+    privateContent
+);</code></pre>
+                            </div>
+                        }
+                        else if (_activeTab == "python")
+                        {
+                            <div class="code-block">
+                                <pre><code>import requests
+import json
+
+# ارسال پیام عمومی
+url = '@(GetBaseUrl())/api/chat'
+payload = {
+    'username': 'device-a',
+    'message': 'Hello from API'
+}
+
+response = requests.post(
+    url,
+    json=payload
+)
+
+print(response.status_code)
+print(response.json())
+
+# ارسال پیام خصوصی
+private_payload = {
+    'username': 'device-a',
+    'message': 'Hello from API',
+    'receiverUsername': 'device-b'  # optional
+}
+
+private_response = requests.post(
+    url,
+    json=private_payload
+)
+
+print(private_response.status_code)</code></pre>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">Model Schema</h2>
+                <div class="schema-block">
+                    <h3>SendMessageDtoModel</h3>
+                    <table class="schema-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>username</code></td>
+                                <td>string</td>
+                                <td>✓</td>
+                                <td>نام کاربری فرستنده پیام</td>
+                            </tr>
+                            <tr>
+                                <td><code>message</code></td>
+                                <td>string</td>
+                                <td>✓</td>
+                                <td>متن پیام</td>
+                            </tr>
+                            <tr>
+                                <td><code>receiverUsername</code></td>
+                                <td>string</td>
+                                <td>✗</td>
+                                <td>نام کاربری گیرنده (برای پیام خصوصی)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">نکات مهم</h2>
+                <ul class="api-notes">
+                    <li>✅ تمام درخواست‌ها باید با Content-Type: application/json ارسال شوند</li>
+                    <li>✅ اگر <code>receiverUsername</code> مشخص نشود، پیام به صورت عمومی ارسال می‌شود</li>
+                    <li>✅ نام کاربری باید معتبر باشد (کاربر باید در سیستم فعال باشد)</li>
+                    <li>⚠️ فعلاً محدودیت Rate Limiting وجود ندارد اما در نسخه‌های آینده اضافه خواهد شد</li>
+                    <li>⚠️ Authentication در نسخه‌های آینده اضافه خواهد شد</li>
+                </ul>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">Best Practices</h2>
+                <ul class="api-notes">
+                    <li>✅ از HTTPS استفاده کنید (در production)</li>
+                    <li>✅ Error handling مناسب برای درخواست‌ها پیاده‌سازی کنید</li>
+                    <li>✅ Timeout مناسب برای درخواست‌ها تنظیم کنید</li>
+                    <li>✅ از Retry logic برای درخواست‌های ناموفق استفاده کنید</li>
+                    <li>✅ لاگ‌گیری مناسب برای debugging پیاده‌سازی کنید</li>
+                </ul>
+            </div>
+
+            <div class="api-section">
+                <h2 class="section-title">پشتیبانی</h2>
+                <p>
+                    در صورت بروز مشکل یا سوال، می‌توانید از <NavLink href="/contact">صفحه تماس با ما</NavLink> با ما در ارتباط باشید.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _activeTab = "curl";
+
+    private void SwitchTab(string tab)
+    {
+        _activeTab = tab;
+    }
+
+    private string GetBaseUrl()
+    {
+        var baseUri = NavigationManager.BaseUri;
+        // حذف trailing slash
+        return baseUri.TrimEnd('/');
+    }
+}

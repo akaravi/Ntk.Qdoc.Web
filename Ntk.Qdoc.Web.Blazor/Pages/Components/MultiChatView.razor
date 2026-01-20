@@ -1,0 +1,212 @@
+@inject IChatService ChatService
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Forms
+@using Ntk.Qdoc.Web.Blazor.Models
+
+<div class="multi-chat-view">
+	<div class="chat-threads-panel">
+		<div class="chat-threads-header">
+			<h3>چت‌های من</h3>
+			<button class="btn btn-sm btn-primary" @onclick="ShowCreateGroupChat">
+				<i class="fa fa-plus"></i> چت جدید
+			</button>
+		</div>
+		
+		<div class="chat-threads-list">
+			@if (_chatThreads != null && _chatThreads.Any())
+			{
+				foreach (var thread in _chatThreads)
+				{
+					var unreadCount = thread.GetUnreadCount(CurrentUser);
+					var isSelected = false;
+					
+					// بررسی انتخاب بودن thread
+					if (!string.IsNullOrEmpty(thread.ChatId))
+					{
+						isSelected = SelectedChatId == thread.ChatId;
+					}
+					else if (thread.Participants.Count == 2)
+					{
+						var otherParticipant = thread.Participants.FirstOrDefault(p => p != CurrentUser);
+						isSelected = _selectedReceiverUsername == otherParticipant;
+					}
+					
+					<div class="chat-thread-item @(isSelected ? "active" : "")" 
+						 @onclick="() => SelectThread(thread)">
+						<div class="thread-info">
+							<div class="thread-name">
+								@if (thread.IsGroupChat)
+								{
+									<i class="fa fa-users"></i>
+								}
+								else
+								{
+									<i class="fa fa-user"></i>
+								}
+								@thread.ChatName
+							</div>
+							<div class="thread-preview">@(string.IsNullOrEmpty(thread.LastMessagePreview) ? "بدون پیام" : thread.LastMessagePreview)</div>
+						</div>
+						@if (unreadCount > 0)
+						{
+							<span class="unread-badge">@unreadCount</span>
+						}
+						<div class="thread-time">@FormatTime(thread.LastMessageTime)</div>
+					</div>
+				}
+			}
+			else
+			{
+				<div class="empty-state">هیچ چتی وجود ندارد</div>
+			}
+		</div>
+	</div>
+
+	<div class="chat-content-panel">
+		@if (!string.IsNullOrEmpty(SelectedChatId))
+		{
+			<Chat CurrentUser="@CurrentUser" ChatId="@SelectedChatId" />
+			<MessageForm LoggedUser="@_loggedUser" ChatId="@SelectedChatId" />
+		}
+		else if (!string.IsNullOrEmpty(_selectedReceiverUsername))
+		{
+			<Chat CurrentUser="@CurrentUser" ReceiverUsername="@_selectedReceiverUsername" />
+			<MessageForm LoggedUser="@_loggedUser" ReceiverUsername="@_selectedReceiverUsername" />
+		}
+		else
+		{
+			<div class="empty-chat-state">
+				<div class="empty-icon">💬</div>
+				<p>یک چت را انتخاب کنید یا چت جدیدی ایجاد کنید</p>
+			</div>
+		}
+	</div>
+</div>
+
+@if (_showCreateGroupDialog)
+{
+	<div class="modal-overlay" @onclick="CloseCreateGroupDialog">
+		<div class="modal-content" @onclick:stopPropagation="true">
+			<div class="modal-header">
+				<h3>ایجاد چت گروهی</h3>
+				<button class="btn-close" @onclick="CloseCreateGroupDialog">×</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label>نام چت (اختیاری)</label>
+					<InputText @bind-Value="_newChatName" class="form-control" placeholder="مثلاً: تیم توسعه" />
+				</div>
+				<Users CurrentUser="@CurrentUser" AllowMultiSelect="true" 
+					   OnCreateGroupChatRequested="@HandleCreateGroupChat" />
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter]
+	public string CurrentUser { get; set; }
+
+	private IEnumerable<ChatThreadModel> _chatThreads;
+	private string SelectedChatId { get; set; }
+	private string _selectedReceiverUsername { get; set; }
+	private bool _showCreateGroupDialog = false;
+	private string _newChatName = "";
+	private UserModel _loggedUser;
+
+	protected override void OnInitialized()
+	{
+		_loggedUser = new UserModel(CurrentUser);
+		LoadChatThreads();
+	}
+
+	private void LoadChatThreads()
+	{
+		if (!string.IsNullOrEmpty(CurrentUser))
+		{
+			// نمایش تمام threadهایی که کاربر در آنها است (حتی بدون پیام)
+			_chatThreads = ChatService.GetChatThreadsForUser(CurrentUser);
+		}
+	}
+
+	private void SelectThread(ChatThreadModel thread)
+	{
+		if (thread == null)
+			return;
+
+		// اگر thread گروهی است، از ChatId استفاده می‌کنیم
+		if (!string.IsNullOrEmpty(thread.ChatId))
+		{
+			SelectedChatId = thread.ChatId;
+			_selectedReceiverUsername = null;
+		}
+		else
+		{
+			// اگر thread خصوصی است، از ReceiverUsername استفاده می‌کنیم
+			var otherParticipant = thread.Participants.FirstOrDefault(p => p != CurrentUser);
+			if (!string.IsNullOrEmpty(otherParticipant))
+			{
+				_selectedReceiverUsername = otherParticipant;
+				SelectedChatId = null;
+			}
+		}
+		
+		// Reset unread count when chat is selected
+		thread.ResetUnreadCount(CurrentUser);
+		InvokeAsync(StateHasChanged);
+	}
+
+	private void ShowCreateGroupChat()
+	{
+		_showCreateGroupDialog = true;
+		_newChatName = "";
+	}
+
+	private void CloseCreateGroupDialog()
+	{
+		_showCreateGroupDialog = false;
+		_newChatName = "";
+	}
+
+	private async Task HandleCreateGroupChat(List<string> participants)
+	{
+		if (participants == null || participants.Count < 1)
+			return;
+
+		try
+		{
+			var chatThread = ChatService.CreateGroupChat(participants, CurrentUser, _newChatName);
+			SelectedChatId = chatThread.ChatId;
+			_selectedReceiverUsername = null;
+			LoadChatThreads();
+			CloseCreateGroupDialog();
+			await InvokeAsync(StateHasChanged);
+			
+			// Thread را انتخاب کن تا بلافاصله نمایش داده شود
+			SelectedChatId = chatThread.ChatId;
+			_selectedReceiverUsername = null;
+		}
+		catch (Exception ex)
+		{
+			// Log error - می‌توانید به کاربر نمایش دهید
+			Console.WriteLine($"Error creating group chat: {ex.Message}");
+		}
+	}
+
+	private string FormatTime(DateTime when)
+	{
+		var now = DateTime.Now;
+		var diff = now - when;
+
+		if (diff.TotalMinutes < 1)
+			return "الان";
+		if (diff.TotalHours < 1)
+			return $"{(int)diff.TotalMinutes}م";
+		if (diff.TotalDays < 1)
+			return $"{(int)diff.TotalHours}س";
+		if (diff.TotalDays < 7)
+			return $"{(int)diff.TotalDays}ر";
+
+		return when.ToString("MM/dd");
+	}
+}

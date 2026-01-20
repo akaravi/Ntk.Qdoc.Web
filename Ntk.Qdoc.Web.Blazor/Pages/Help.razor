@@ -1,0 +1,142 @@
+@page "/help"
+
+<div class="page-content">
+    <div class="surface-card">
+        <h1 class="page-title">راهنمای استفاده</h1>
+        <p class="sub-text">راهنمای کامل استفاده از سرویس پیام‌رسانی Qdoc</p>
+
+        <div class="help-sections">
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-play-circle"></i> شروع کار
+                </h2>
+                <div class="help-content">
+                    <h3>اسکن QR Code</h3>
+                    <ol class="help-steps">
+                        <li>با باز کردن برنامه، یک QR Code منحصر به فرد برای شما ایجاد می‌شود</li>
+                        <li>این QR Code را به دیگران نشان دهید تا بتوانند با شما ارتباط برقرار کنند</li>
+                        <li>کد کاربری شما در زیر QR Code نمایش داده می‌شود</li>
+                    </ol>
+
+                    <h3>ورود به سیستم</h3>
+                    <ul class="help-list">
+                        <li>نیازی به ثبت‌نام نیست - سیستم به صورت خودکار شما را شناسایی می‌کند</li>
+                        <li>هر بار که صفحه را باز می‌کنید، یک کد جدید دریافت می‌کنید</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-comment"></i> ارسال پیام
+                </h2>
+                <div class="help-content">
+                    <h3>ارسال پیام عمومی</h3>
+                    <p>در صفحه "اتاق گفتگو" می‌توانید پیام‌هایی ارسال کنید که همه کاربران آن را می‌بینند.</p>
+
+                    <h3>ارسال پیام خصوصی</h3>
+                    <ol class="help-steps">
+                        <li>کد کاربری مخاطب را اسکن کنید یا به صورت دستی وارد کنید</li>
+                        <li>پیام خود را در کادر متنی بنویسید</li>
+                        <li>دکمه ارسال را بزنید</li>
+                    </ol>
+
+                    <h3>پاسخ به پیام</h3>
+                    <p>وقتی پیامی دریافت می‌کنید، می‌توانید مستقیماً در همان صفحه پاسخ دهید.</p>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-users"></i> چت گروهی
+                </h2>
+                <div class="help-content">
+                    <h3>ایجاد چت گروهی</h3>
+                    <ol class="help-steps">
+                        <li>به صفحه "اتاق گفتگو" بروید</li>
+                        <li>از لیست کاربران، چند نفر را انتخاب کنید</li>
+                        <li>دکمه "شروع چت گروهی" را بزنید</li>
+                        <li>یک نام برای چت گروهی انتخاب کنید (اختیاری)</li>
+                    </ol>
+
+                    <h3>مدیریت چت</h3>
+                    <ul class="help-list">
+                        <li>می‌توانید همزمان در چندین چت شرکت کنید</li>
+                        <li>لیست تمام چت‌های شما در سمت چپ نمایش داده می‌شود</li>
+                        <li>با کلیک روی هر چت، پیام‌های آن نمایش داده می‌شود</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-cog"></i> تنظیمات
+                </h2>
+                <div class="help-content">
+                    <h3>تغییر کد کاربری</h3>
+                    <p>برای دریافت کد جدید، کافی است صفحه را Refresh کنید.</p>
+
+                    <h3>خروج از حساب</h3>
+                    <p>با بستن مرورگر یا Refresh کردن صفحه، از حساب خود خارج می‌شوید.</p>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-question"></i> سوالات متداول (FAQ)
+                </h2>
+                <div class="help-content">
+                    <div class="faq-item">
+                        <h3>آیا اطلاعات من ذخیره می‌شود؟</h3>
+                        <p>خیر، پیام‌ها به صورت موقت در حافظه سرور ذخیره می‌شوند و بعد از اتصال مجدد، تاریخچه قبلی در دسترس نیست.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>چگونه می‌توانم با API ارتباط برقرار کنم؟</h3>
+                        <p>برای اطلاعات کامل درباره API، به <NavLink href="/api-docs">صفحه راهنمای API</NavLink> مراجعه کنید.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>آیا می‌توانم فایل ارسال کنم؟</h3>
+                        <p>فعلاً فقط ارسال متن و لینک پشتیبانی می‌شود. ارسال فایل در نسخه‌های آینده اضافه خواهد شد.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3>چه تعداد کاربر می‌تواند در یک چت گروهی باشد؟</h3>
+                        <p>هیچ محدودیتی در تعداد اعضای چت گروهی وجود ندارد.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h2 class="help-section-title">
+                    <i class="fa fa-wrench"></i> عیب‌یابی
+                </h2>
+                <div class="help-content">
+                    <div class="troubleshooting-item">
+                        <h3>پیام ارسال نمی‌شود</h3>
+                        <ul class="help-list">
+                            <li>اطمینان حاصل کنید که به اینترنت متصل هستید</li>
+                            <li>صفحه را Refresh کنید</li>
+                            <li>کد کاربری گیرنده را بررسی کنید</li>
+                        </ul>
+                    </div>
+
+                    <div class="troubleshooting-item">
+                        <h3>QR Code نمایش داده نمی‌شود</h3>
+                        <ul class="help-list">
+                            <li>صفحه را Refresh کنید</li>
+                            <li>JavaScript مرورگر را فعال کنید</li>
+                            <li>از مرورگرهای مدرن استفاده کنید (Chrome, Firefox, Edge)</li>
+                        </ul>
+                    </div>
+
+                    <div class="troubleshooting-item">
+                        <h3>پیام‌های قبلی نمایش داده نمی‌شوند</h3>
+                        <p>پیام‌ها به صورت موقت ذخیره می‌شوند. اگر اتصال قطع شده باشد، تاریخچه قبلی در دسترس نیست.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

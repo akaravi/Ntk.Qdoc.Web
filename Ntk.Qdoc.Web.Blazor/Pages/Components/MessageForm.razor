@@ -40,6 +40,9 @@
 	public string ReceiverUsername { get; set; }
 
 	[Parameter]
+	public string ChatId { get; set; }
+
+	[Parameter]
 	public bool AllowGetReceiverUsername { get; set; } = false;
 
 	private PostMessageViewModel _newMessage = new PostMessageViewModel();
@@ -54,16 +57,35 @@
 	private async Task HandleValidSubmit()
 	{
 		_sending = true;
-		if (!string.IsNullOrEmpty(this.ReceiverUsername))
+		
+		try
 		{
-			await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername + "", _newMessage.Text);
+			// اولویت با ChatId است (چت گروهی)
+			if (!string.IsNullOrEmpty(ChatId))
+			{
+				await ChatService.PostMessageToChatAsync(ChatId, LoggedUser, _newMessage.Text);
+			}
+			// سپس چت خصوصی
+			else if (!string.IsNullOrEmpty(this.ReceiverUsername))
+			{
+				await ChatService.PostMessageAsync(this.LoggedUser, this.ReceiverUsername, _newMessage.Text);
+			}
+			// در نهایت پیام عمومی
+			else
+			{
+				await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			await ChatService.PostMessageAsync(this.LoggedUser, _newMessage.Text);
+			// Log error - می‌توانید به کاربر نمایش دهید
+			Console.WriteLine($"Error sending message: {ex.Message}");
 		}
-		_newMessage = new PostMessageViewModel();
-		_sending = false;
+		finally
+		{
+			_newMessage = new PostMessageViewModel();
+			_sending = false;
+		}
 	}
 
 

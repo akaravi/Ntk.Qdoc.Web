@@ -1,0 +1,114 @@
+@page "/about"
+
+<div class="page-content">
+    <div class="surface-card">
+        <h1 class="page-title">درباره ما</h1>
+        
+        <div class="about-section">
+            <h2 class="section-title">معرفی پروژه</h2>
+            <p class="section-text">
+                Ntk.Qdoc.Web یک اپلیکیشن پیام‌رسانی سریع و ساده است که امکان ارتباط فوری بین کاربران را از طریق QR Code و بارکد فراهم می‌کند. 
+                این سیستم برای ارتباطات سریع و بدون نیاز به ثبت‌نام طراحی شده است.
+            </p>
+        </div>
+
+        <div class="about-section">
+            <h2 class="section-title">تکنولوژی‌های استفاده‌شده</h2>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>.NET 9</strong>
+                    <span>Framework اصلی</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Blazor Server</strong>
+                    <span>UI Framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>SignalR</strong>
+                    <span>Real-time Communication</span>
+                </div>
+                <div class="tech-item">
+                    <strong>C# 12</strong>
+                    <span>Programming Language</span>
+                </div>
+                <div class="tech-item">
+                    <strong>ASP.NET Core</strong>
+                    <span>Web Framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>QRCoder</strong>
+                    <span>QR Code Generation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2 class="section-title">ویژگی‌های کلیدی</h2>
+            <ul class="features-list">
+                <li>✅ ورود سریع با QR Code</li>
+                <li>✅ پیام‌رسانی بلادرنگ</li>
+                <li>✅ چت خصوصی و عمومی</li>
+                <li>✅ چت گروهی (در حال توسعه)</li>
+                <li>✅ API برای توسعه‌دهندگان</li>
+                <li>✅ رابط کاربری مدرن و responsive</li>
+            </ul>
+        </div>
+
+        <div class="about-section">
+            <h2 class="section-title">اطلاعات فنی</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">نسخه:</span>
+                    <span class="info-value">@Version</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ساخت:</span>
+                    <span class="info-value">@BuildDate</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">فریم‌ورک:</span>
+                    <span class="info-value">.NET 9</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2 class="section-title">لایسنس</h2>
+            <p class="section-text">
+                این پروژه تحت لایسنس MIT منتشر شده است. برای اطلاعات بیشتر به <a href="https://github.com" target="_blank">GitHub Repository</a> مراجعه کنید.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Version { get; set; } = "1.0.0";
+    private string BuildDate { get; set; }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var versionAttribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(assembly);
+            if (versionAttribute != null)
+            {
+                Version = versionAttribute.InformationalVersion;
+            }
+            else
+            {
+                var version = assembly.GetName().Version;
+                if (version != null)
+                {
+                    Version = version.ToString();
+                }
+            }
+        }
+        catch
+        {
+            Version = "Unknown";
+        }
+
+        BuildDate = System.IO.File.GetCreationTime(System.Reflection.Assembly.GetExecutingAssembly().Location).ToString("yyyy-MM-dd");
+    }
+}

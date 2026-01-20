@@ -1,0 +1,107 @@
+@page "/contact"
+@using Microsoft.AspNetCore.Components.Forms
+@using Ntk.Qdoc.Web.Blazor.ViewModels
+
+<div class="page-content">
+    <div class="surface-card">
+        <h1 class="page-title">تماس با ما</h1>
+        <p class="sub-text">نظرات، پیشنهادات و سوالات خود را با ما در میان بگذارید</p>
+
+        <EditForm Model="@_contactModel" OnValidSubmit="HandleValidSubmit" class="contact-form">
+            <DataAnnotationsValidator />
+            
+            <div class="form-group">
+                <label for="name">نام <span class="required">*</span></label>
+                <InputText id="name" @bind-Value="_contactModel.Name" class="form-control" placeholder="نام خود را وارد کنید" />
+                <ValidationMessage For="@(() => _contactModel.Name)" />
+            </div>
+
+            <div class="form-group">
+                <label for="email">ایمیل <span class="required">*</span></label>
+                <InputText id="email" type="email" @bind-Value="_contactModel.Email" class="form-control" placeholder="email@example.com" />
+                <ValidationMessage For="@(() => _contactModel.Email)" />
+            </div>
+
+            <div class="form-group">
+                <label for="subject">موضوع <span class="required">*</span></label>
+                <InputSelect id="subject" @bind-Value="_contactModel.Subject" class="form-control">
+                    <option value="">انتخاب موضوع</option>
+                    <option value="پیشنهاد">پیشنهاد</option>
+                    <option value="مشکل">گزارش مشکل</option>
+                    <option value="سوال">سوال</option>
+                    <option value="همکاری">درخواست همکاری</option>
+                    <option value="سایر">سایر</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => _contactModel.Subject)" />
+            </div>
+
+            <div class="form-group">
+                <label for="message">پیام <span class="required">*</span></label>
+                <InputTextArea id="message" @bind-Value="_contactModel.Message" class="form-control" rows="6" placeholder="پیام خود را بنویسید..." />
+                <ValidationMessage For="@(() => _contactModel.Message)" />
+            </div>
+
+            @if (_isSubmitting)
+            {
+                <button type="submit" class="btn btn-primary btn-block" disabled>
+                    <i class="fa fa-spinner fa-spin"></i> در حال ارسال...
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa fa-paper-plane"></i> ارسال پیام
+                </button>
+            }
+
+            @if (_showSuccessMessage)
+            {
+                <div class="alert alert-success mt-3">
+                    <i class="fa fa-check-circle"></i> پیام شما با موفقیت ارسال شد. با تشکر از تماس شما!
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    <i class="fa fa-exclamation-circle"></i> @_errorMessage
+                </div>
+            }
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private ContactViewModel _contactModel = new ContactViewModel();
+    private bool _isSubmitting = false;
+    private bool _showSuccessMessage = false;
+    private string _errorMessage = "";
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _showSuccessMessage = false;
+        _errorMessage = "";
+
+        try
+        {
+            // در اینجا می‌توانید پیام را به یک service ارسال کنید
+            // فعلاً فقط شبیه‌سازی می‌کنیم
+            await Task.Delay(1000); // شبیه‌سازی ارسال
+
+            // TODO: ارسال به ContactService
+            // await ContactService.SendContactMessageAsync(_contactModel);
+
+            _showSuccessMessage = true;
+            _contactModel = new ContactViewModel(); // Reset form
+        }
+        catch
+        {
+            _errorMessage = "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+}

@@ -25,7 +25,12 @@ else
 					<span>کد شما:</span>
 					<strong>@this.User.Username</strong>
 				</div>
-				<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block mt-2" type="button">بارکد سایرین را اسکن کنید</button>
+				<div class="hero-actions">
+					<button @onclick="() => ActionChangePage(view)" class="btn btn-lg btn-primary btn-block mt-2" type="button">بارکد سایرین را اسکن کنید</button>
+					<button @onclick='@(() => ActionChangePage("multichat"))' class="btn btn-lg btn-outline-primary btn-block mt-2" type="button">
+						<i class="fa fa-comments"></i> چت‌های من
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -55,39 +60,24 @@ else
 	@if (ViewGetMessageComponent)
 	{
 		<div class="surface-card">
-			<div class="chat-messages mb-3">
-				@if (null != _messages)
-				{
-					foreach (var message in _messages)
-					{
-						<p class='msg'>
-							<div class='msg-meta'>
-								@if (!string.IsNullOrEmpty(message.ReceiverUsername))
-								{
-									<span class='who'>@title(message.Username) > @title(message.ReceiverUsername)</span>
-								}
-								else
-								{
-									<span class='who'>@title(message.Username)</span>
-								}
-								<span class='when'>@message.When</span>
-							</div>
-							<span class='what'>@message.Text</span>
-						</p>
-					}
-				}
-			</div>
+			<Chat CurrentUser="@User.Username" ReceiverUsername="@ReceiverUsername" />
 			<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" />
 		</div>
 	}
 	@if (ViewChatRoomComponnet)
 	{
 		<div class="chat-layout">
-			<Users />
+			<Users CurrentUser="@User.Username" AllowMultiSelect="false" />
 			<div class="surface-card">
-				<Chat CurrentUser="@User.Username" />
+				<Chat CurrentUser="@User.Username" ReceiverUsername="@ReceiverUsername" />
 				<MessageForm LoggedUser="@User" ReceiverUsername="@ReceiverUsername" AllowGetReceiverUsername="@true" />
 			</div>
+		</div>
+	}
+	@if (ViewMultiChatComponent)
+	{
+		<div class="surface-card">
+			<MultiChatView CurrentUser="@User.Username" />
 		</div>
 	}
 }
@@ -109,6 +99,7 @@ else
 	private bool ViewGetMessageComponent = false;
 	private bool ViewScanComponent = false;
 	private bool ViewChatRoomComponnet = false;
+	private bool ViewMultiChatComponent = false;
 	private PostMessageViewModel _message = new PostMessageViewModel();
 	private string ReceiverUsername = "";
 	protected override void OnInitialized()
@@ -156,10 +147,14 @@ else
 			this.User = this.ChatService.Login(User.Username, this.ConnectedClientService.Client);
 			if (!string.IsNullOrEmpty(id))
 			{
-				if (id == "room")
-				{
-					await ActionChangePage("room");
-				}
+			if (id == "room")
+			{
+				await ActionChangePage("room");
+			}
+			else if (id == "multichat")
+			{
+				await ActionChangePage("multichat");
+			}
 				else
 				{
 					ScanedUser = ChatService.CheckUserExist(this.User, id);
@@ -211,7 +206,14 @@ else
 	private string viewLast = "";
 	private async Task ActionChangePage(string view)
 	{
-		if (viewLast == view || viewLast == "room")
+		// اگر multichat انتخاب شد، به صفحه جداگانه هدایت می‌کنیم
+		if (view == "multichat")
+		{
+			UriHelper.NavigateTo("/multichat");
+			return;
+		}
+
+		if (viewLast == view || (viewLast == "room" && view == "room"))
 		{
 			await InvokeAsync(StateHasChanged);
 			return;
@@ -222,6 +224,7 @@ else
 		ViewSendMessageComponent = false;
 		ViewGetMessageComponent = false;
 		ViewChatRoomComponnet = false;
+		ViewMultiChatComponent = false;
 		switch (view)
 		{
 			case "main":
@@ -239,15 +242,18 @@ else
 			case "room":
 				ViewChatRoomComponnet = true;
 				break;
+			case "multichat":
+				ViewMultiChatComponent = true;
+				break;
 		}
 		// this.StateHasChanged();
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private void ActionScanedDevice(UserModel model)
+	private async void ActionScanedDevice(UserModel model)
 	{
 		this.ScanedUser = model;
 		this.ReceiverUsername = ScanedUser.Username;
-		this.ActionChangePage("send");
+		await this.ActionChangePage("send");
 	}
 	            }

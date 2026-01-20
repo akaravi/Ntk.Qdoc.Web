@@ -17,18 +17,26 @@
 		{
 			foreach (var message in _messages)
 			{
-				var isMyMessage = !string.IsNullOrEmpty(CurrentUser) && message.Username == CurrentUser;
-				var isPrivateMessage = !string.IsNullOrEmpty(message.ReceiverUsername);
+				// تشخیص اینکه آیا این پیام از کاربر فعلی است یا نه
+				// در چت خصوصی: اگر Username برابر CurrentUser باشد، پیام از کاربر است
+				// در چت گروهی: اگر Username برابر CurrentUser باشد، پیام از کاربر است
+				var isMyMessage = !string.IsNullOrEmpty(CurrentUser) && 
+								  !string.IsNullOrEmpty(message.Username) &&
+								  message.Username.Trim().Equals(CurrentUser.Trim(), StringComparison.OrdinalIgnoreCase);
+				
+				// برای چت گروهی، نام فرستنده را نمایش می‌دهیم
+				var isGroupChat = !string.IsNullOrEmpty(ChatId);
+				var showSenderName = isGroupChat && !isMyMessage;
 				
 				<div class="message-wrapper @(isMyMessage ? "message-sent" : "message-received")">
 					@if (!isMyMessage)
 					{
 						<div class="message-avatar">
-							@message.Username.Substring(0, 1).ToUpper()
+							@GetAvatarInitial(message.Username)
 						</div>
 					}
 					<div class="message-bubble">
-						@if (isPrivateMessage && !isMyMessage)
+						@if (showSenderName)
 						{
 							<div class="message-sender">@message.Username</div>
 						}
@@ -53,6 +61,12 @@
 	[Parameter]
 	public string CurrentUser { get; set; }
 
+	[Parameter]
+	public string ChatId { get; set; }
+
+	[Parameter]
+	public string ReceiverUsername { get; set; }
+
 	private List<MessageModel> _messages;
 	private ElementReference _messagesContainer;
 
@@ -60,6 +74,9 @@
 	{
 		ChatService.MessageReceived += OnMessage;
 		_messages = new List<MessageModel>();
+		
+		// بارگذاری تاریخچه پیام‌ها
+		LoadChatHistory();
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,11 +88,54 @@
 		await base.OnAfterRenderAsync(firstRender);
 	}
 
+	private void LoadChatHistory()
+	{
+		if (!string.IsNullOrEmpty(ChatId))
+		{
+			// بارگذاری پیام‌های چت گروهی
+			var history = ChatService.GetMessagesForChat(ChatId, CurrentUser);
+			_messages = history.ToList();
+		}
+		else if (!string.IsNullOrEmpty(ReceiverUsername))
+		{
+			// بارگذاری پیام‌های چت خصوصی
+			var history = ChatService.GetPrivateChatMessages(CurrentUser, ReceiverUsername);
+			_messages = history.ToList();
+		}
+		else
+		{
+			_messages = new List<MessageModel>();
+		}
+	}
+
 	private async void OnMessage(object sender, MessageModel message)
 	{
-		_messages.Add(message);
-		await InvokeAsync(StateHasChanged);
-		await ScrollToBottom();
+		// فیلتر کردن پیام‌ها بر اساس ChatId یا ReceiverUsername
+		bool shouldShow = false;
+
+		if (!string.IsNullOrEmpty(ChatId))
+		{
+			// چت گروهی - نمایش اگر ChatId مطابقت داشته باشد
+			shouldShow = message.ChatId == ChatId;
+		}
+		else if (!string.IsNullOrEmpty(ReceiverUsername))
+		{
+			// چت خصوصی - نمایش اگر پیام برای این دو کاربر باشد
+			shouldShow = (message.Username == CurrentUser && message.ReceiverUsername == ReceiverUsername) ||
+						(message.Username == ReceiverUsername && message.ReceiverUsername == CurrentUser);
+		}
+		else
+		{
+			// پیام عمومی - نمایش اگر receiver نداشته باشد
+			shouldShow = message.IsPublicMessage;
+		}
+
+		if (shouldShow)
+		{
+			_messages.Add(message);
+			await InvokeAsync(StateHasChanged);
+			await ScrollToBottom();
+		}
 	}
 
 	private async Task ScrollToBottom()
@@ -102,6 +162,14 @@
 			return $"{(int)diff.TotalDays} روز پیش";
 		
 		return when.ToString("dd MMM yyyy HH:mm");
+	}
+
+	private string GetAvatarInitial(string username)
+	{
+		if (string.IsNullOrEmpty(username))
+			return "?";
+		
+		return username.Substring(0, Math.Min(1, username.Length)).ToUpper();
 	}
 
 	public void Dispose()

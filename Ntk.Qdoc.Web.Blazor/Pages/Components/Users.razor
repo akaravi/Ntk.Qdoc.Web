@@ -13,6 +13,22 @@
 			</span>
 		</div>
 	</div>
+	
+	@if (AllowMultiSelect)
+	{
+		<div class="users-actions">
+			@if (_selectedUsers.Any())
+			{
+				<button class="btn btn-sm btn-primary" @onclick="OnCreateGroupChat">
+					<i class="fa fa-users"></i> شروع چت گروهی (@(_selectedUsers.Count))
+				</button>
+				<button class="btn btn-sm btn-ghost" @onclick="ClearSelection">
+					<i class="fa fa-times"></i> لغو
+				</button>
+			}
+		</div>
+	}
+	
 	<div class='users-list p-2'>
 		@if (null != _users)
 		{
@@ -20,13 +36,18 @@
 			{
 				foreach (var user in _users)
 				{
-					<p>
-						<span class='mr-2'>
+					var isSelected = _selectedUsers.Contains(user.Username);
+					<div class="user-item @(isSelected ? "selected" : "")" @onclick="() => ToggleUserSelection(user.Username)">
+						@if (AllowMultiSelect)
+						{
+							<input type="checkbox" checked="@isSelected" @onclick:stopPropagation="true" @onchange="() => ToggleUserSelection(user.Username)" />
+						}
+						<span class='user-status'>
 							<span class="status-dot @( (null != user.Client) ? "" : "status-offline-dot")"></span>
 						</span>
-						<span class='mr-1 status-@( (null != user.Client) ? "online" : "offline")'><i class="fa fa-user"></i></span>
-						@user.Username
-					</p>
+						<span class='user-icon status-@( (null != user.Client) ? "online" : "offline")'><i class="fa fa-user"></i></span>
+						<span class="user-name">@user.Username</span>
+					</div>
 				}
 			}
 			else
@@ -42,7 +63,18 @@
 </div>
 
 @code {
+	[Parameter]
+	public string CurrentUser { get; set; }
+
+	[Parameter]
+	public bool AllowMultiSelect { get; set; } = false;
+
+	[Parameter]
+	public EventCallback<List<string>> OnCreateGroupChatRequested { get; set; }
+
 	private IEnumerable<UserModel> _users;
+	private HashSet<string> _selectedUsers = new HashSet<string>();
+
 	protected override void OnInitialized()
 	{
 		ChatService.UserLoggedIn += OnUserLoggedIn;
@@ -60,6 +92,41 @@
 	{
 		_users = this.ChatService.GetAllUsers();
 		await InvokeAsync(StateHasChanged);
+	}
+
+	private void ToggleUserSelection(string username)
+	{
+		if (!AllowMultiSelect)
+			return;
+
+		if (username == CurrentUser)
+			return; // کاربر نمی‌تواند خودش را انتخاب کند
+
+		if (_selectedUsers.Contains(username))
+		{
+			_selectedUsers.Remove(username);
+		}
+		else
+		{
+			_selectedUsers.Add(username);
+		}
+		
+		InvokeAsync(StateHasChanged);
+	}
+
+	private void ClearSelection()
+	{
+		_selectedUsers.Clear();
+		InvokeAsync(StateHasChanged);
+	}
+
+	private async Task OnCreateGroupChat()
+	{
+		if (_selectedUsers.Any() && OnCreateGroupChatRequested.HasDelegate)
+		{
+			await OnCreateGroupChatRequested.InvokeAsync(_selectedUsers.ToList());
+			_selectedUsers.Clear();
+		}
 	}
 
 	private void Dispose()

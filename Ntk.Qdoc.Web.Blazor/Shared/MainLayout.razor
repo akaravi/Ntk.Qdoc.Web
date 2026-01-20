@@ -1,10 +1,128 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject IChatService ChatService
+@inject IConnectedClientService ConnectedClientService
+@using System.Linq
+@using Ntk.Qdoc.Web.Blazor.Interfaces
+@using Ntk.Qdoc.Web.Blazor.Models
 
 <div class="app-shell">
     <nav class="nav-main">
-        <h1><a href="#" style="color:white; padding-left :15px">Qdoc</a></h1>
+        <div class="nav-container">
+            <h1><NavLink href="/" Match="NavLinkMatch.All" class="nav-logo">Qdoc</NavLink></h1>
+            @if (!string.IsNullOrEmpty(_currentUsername))
+            {
+                <div class="nav-user-info">
+                    <i class="fa fa-user-circle"></i>
+                    <span>@_currentUsername</span>
+                </div>
+            }
+            <div class="nav-menu">
+                <NavLink href="/" Match="NavLinkMatch.All" class="nav-link">
+                    <i class="fa fa-home"></i> خانه
+                </NavLink>
+                <NavLink href="/multichat" class="nav-link">
+                    <i class="fa fa-comments"></i> چت‌ها
+                </NavLink>
+                <NavLink href="/help" class="nav-link">
+                    <i class="fa fa-question-circle"></i> راهنما
+                </NavLink>
+                <NavLink href="/api-docs" class="nav-link">
+                    <i class="fa fa-code"></i> API
+                </NavLink>
+                <NavLink href="/about" class="nav-link">
+                    <i class="fa fa-info-circle"></i> درباره ما
+                </NavLink>
+                <NavLink href="/contact" class="nav-link">
+                    <i class="fa fa-envelope"></i> تماس با ما
+                </NavLink>
+            </div>
+            <button class="nav-toggle" @onclick="ToggleMobileMenu" aria-label="Toggle menu">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        @if (_mobileMenuOpen)
+        {
+            <div class="nav-menu show">
+                <NavLink href="/" Match="NavLinkMatch.All" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-home"></i> خانه
+                </NavLink>
+                <NavLink href="/multichat" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-comments"></i> چت‌ها
+                </NavLink>
+                <NavLink href="/help" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-question-circle"></i> راهنما
+                </NavLink>
+                <NavLink href="/api-docs" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-code"></i> API
+                </NavLink>
+                <NavLink href="/about" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-info-circle"></i> درباره ما
+                </NavLink>
+                <NavLink href="/contact" class="nav-link" @onclick="ToggleMobileMenu">
+                    <i class="fa fa-envelope"></i> تماس با ما
+                </NavLink>
+            </div>
+        }
     </nav>
     <div class="page-container">
         @Body
     </div>
 </div>
+
+@code {
+    private bool _mobileMenuOpen = false;
+    private string _currentUsername = "";
+
+    protected override void OnInitialized()
+    {
+        if (ConnectedClientService?.Client != null && ChatService != null)
+        {
+            // سعی می‌کنیم کاربر فعلی را پیدا کنیم
+            var allUsers = ChatService.GetAllUsers();
+            var currentUser = allUsers.FirstOrDefault(u => u.Client?.Id == ConnectedClientService.Client.Id);
+            if (currentUser != null)
+            {
+                _currentUsername = currentUser.Username;
+            }
+        }
+
+        if (ChatService != null)
+        {
+            ChatService.UserLoggedIn += OnUserLoggedIn;
+            ChatService.UserLoggedOut += OnUserLoggedOut;
+        }
+    }
+
+    private void OnUserLoggedIn(object sender, UserLoginEventArgs args)
+    {
+        if (args?.User != null && args.User.Client?.Id == ConnectedClientService?.Client?.Id)
+        {
+            _currentUsername = args.User.Username;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnUserLoggedOut(object sender, UserLogoutEventArgs args)
+    {
+        if (args?.Username == _currentUsername)
+        {
+            _currentUsername = "";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ToggleMobileMenu()
+    {
+        _mobileMenuOpen = !_mobileMenuOpen;
+    }
+
+    public void Dispose()
+    {
+        if (ChatService != null)
+        {
+            ChatService.UserLoggedIn -= OnUserLoggedIn;
+            ChatService.UserLoggedOut -= OnUserLoggedOut;
+        }
+    }
+}

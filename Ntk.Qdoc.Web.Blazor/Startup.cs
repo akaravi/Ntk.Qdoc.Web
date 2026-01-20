@@ -56,6 +56,10 @@ namespace Ntk.Qdoc.Web.Blazor
                 return new MessagesConsumer(channel.Reader);
             });
 
+            // Add new services for multi-chat functionality
+            services.AddSingleton<IChatThreadService, ChatThreadService>();
+            services.AddSingleton<IMessageRepository, InMemoryMessageRepository>();
+
             services.AddHostedService<MessagesConsumerWorker>();
 
             services.AddSingleton<IChatService, ChatService>();
