@@ -143,17 +143,19 @@ jobs:
         continue-on-error: true
         run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" || echo "No tests found or tests failed, continuing..."
 
-      - name: Create archive for ${{ matrix.runtime }}
+      - name: Create archive for ${{ matrix.runtime }} (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "publish/${{ matrix.runtime }}/*" -DestinationPath "Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip" -Force
+
+      - name: Create archive for ${{ matrix.runtime }} (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           cd publish/${{ matrix.runtime }}
           if [ "${{ matrix.archive_format }}" == "zip" ]; then
-            if command -v zip &> /dev/null; then
-              zip -r ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip .
-            else
-              # Fallback for Windows using PowerShell
-              powershell Compress-Archive -Path * -DestinationPath ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip -Force
-            fi
+            zip -r ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.zip .
           else
             tar -czf ../../Ntk.Qdoc.Web.Blazor-v${{ needs.get-version.outputs.version }}-${{ matrix.runtime }}.tar.gz .
           fi
